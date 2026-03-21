@@ -1,11 +1,13 @@
 <?php
+require_once __DIR__ . '/../../Config/database.php';
 class Actor {
     private $conn;
     private $id;
     private $name;
     private $info;
     public function __construct($conn){
-        $this->conn = $conn;
+      // dùng Singleton PDO
+        $this->conn = Database::getInstance()->getConnection();
     }
     public function setActor($id,$name,$info){
         $this->id = $id;
@@ -21,25 +23,21 @@ class Actor {
     public function getInfo(){
         return $this->info;
     }
-    public function getCharacters($actor_id){
-        $sql = "
-        SELECT 
-            Character_ID,
-            Character_Name,
-            Movie_ID
-        FROM tbl_character
-        WHERE Actor_ID = ?
-        ";
-
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("i",$actor_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $characters = [];
-        while($row = $result->fetch_assoc()){
-            $characters[] = $row;
+    // Lấy danh sách diễn viên theo Movie (CALL Stored Procedure)
+    public function getActorsByMovie($movie_id){
+        try {
+            if (!$movie_id) return [];
+            $sql = "CALL sp_GetActorsByMovie(:movie_id)";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindParam(':movie_id', $movie_id, PDO::PARAM_INT);
+            $stmt->execute();
+            $data = $stmt->fetchAll(PDO::FETCH_OBJ);
+            $stmt->closeCursor();
+            return $data ?: [];
+        } catch (PDOException $e) {
+            error_log($e->getMessage());
+            return [];
         }
-        return $characters;
     }
 }
 ?>
