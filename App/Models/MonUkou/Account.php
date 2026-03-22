@@ -7,6 +7,7 @@ class Account {
     private string $email;
     private string $tel;
     private int $role;
+    private string $img;
 
     private ?Watchlist $watchlist = null; // Dấu ? nghĩa là có thể null
     private array $feedbacks = [];
@@ -19,6 +20,7 @@ class Account {
         $this->email = $email;
         $this->tel = $tel;
         $this->role = $role;
+        $this->img = $img;
     }
 
     // --- Các phương thức từ sơ đồ ---
@@ -48,6 +50,28 @@ class Account {
     // Thêm Feedback vào danh sách của user
     public function addFeedback(Feedback $feedback): void {
         $this->feedbacks[] = $feedback;
+    }
+
+    // --- Phương thức gọi SP sp_InsertAccount ---
+    public static function insertAccount($db, $id, $user, $pass, $role, $mail, $tel, $img) {
+        $sql = "CALL sp_InsertAccount(?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $db->prepare($sql);
+        return $stmt->execute([$id, $user, $pass, $role, $mail, $tel, $img]);
+    }
+
+    // --- Phương thức gọi SP sp_UpdateAccount ---
+    public function save($db) {
+        $sql = "CALL sp_UpdateAccount(?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $db->prepare($sql);
+        return $stmt->execute([
+            $this->id, 
+            $this->user, 
+            $this->pass, 
+            $this->role, 
+            $this->email, 
+            $this->tel, 
+            $this->img
+        ]);
     }
 }
 ?>
