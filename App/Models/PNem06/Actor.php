@@ -22,22 +22,19 @@ class Actor {
     public function getInfo(){
         return $this->info;
     }
+    // SP: Lấy diễn viên theo Movie
     public function getActorsByMovie($movie_id){
     try {
         if (!isset($movie_id) || !is_numeric($movie_id)) {
             return [];
         }
-
         $movie_id = (int)$movie_id;
-
         $sql = "CALL sp_GetActorsByMovie(:movie_id)";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindParam(':movie_id', $movie_id, PDO::PARAM_INT);
         $stmt->execute();
-
         $data = $stmt->fetchAll(PDO::FETCH_OBJ);
         $stmt->closeCursor();
-
         // loại trùng actor (many-many)
         $unique = [];
         foreach ($data as $actor) {
@@ -51,5 +48,22 @@ class Actor {
         return [];
     }
 }
+    // SP: Top diễn viên theo giải thưởng
+    public function getTopActorsByAwards(){
+        try {
+            $sql = "CALL sp_TopActorsByAwards()";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->execute();
+
+            $data = $stmt->fetchAll(PDO::FETCH_OBJ);
+            $stmt->closeCursor();
+
+            return $data ?: [];
+
+        } catch (PDOException $e) {
+            error_log($e->getMessage());
+            return [];
+        }
+    }
 }
 ?>
