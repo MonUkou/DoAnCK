@@ -1,3 +1,5 @@
+CREATE PROCEDURE sp_GetMovieStatsByGenre
+AS
 BEGIN
     SELECT 
         g.Genre_Name AS Genre,
@@ -6,3 +8,4 @@ BEGIN
     LEFT JOIN tbl_movie m ON g.Genre_ID = m.Genre_ID
     GROUP BY g.Genre_Name;
 END
+GO
