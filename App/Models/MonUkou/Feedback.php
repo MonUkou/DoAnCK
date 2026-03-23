@@ -34,5 +34,20 @@ class Feedback {
     // --- Getter ---
     public function getData(): string { return $this->data; }
     public function getDate(): DateTime { return $this->date; }
+
+    // --- Phương thức gọi SP sp_getMovieFeedbackList ---
+    public static function getListByMovie($db, $movieId) {
+        $sql = "CALL sp_getMovieFeedbackList(?)";
+        $stmt = $db->prepare($sql);
+        $stmt->execute([$movieId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC); 
+    }
+
+    // --- Phương thức gọi SP sp_DeleteFeedback ---
+    public static function delete($db, $feedbackId) {
+        $sql = "CALL sp_DeleteFeedback(?)";
+        $stmt = $db->prepare($sql);
+        return $stmt->execute([$feedbackId]);
+    }
 }
 ?>
