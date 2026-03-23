@@ -1,3 +1,5 @@
+CREATE PROCEDURE sp_GetLatestMovies
+AS
 BEGIN
     SELECT 
         m.Movie_Title AS MovieTitle, 
