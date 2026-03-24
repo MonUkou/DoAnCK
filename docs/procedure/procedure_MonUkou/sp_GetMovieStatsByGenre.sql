@@ -1,6 +1,6 @@
 DELIMITER $$
 
-CREATE PROCEDURE sp_GetMovieStatsByGenre()
+CREATE PROCEDURE 'sp_GetMovieStatsByGenre'()
 BEGIN
     SELECT 
         g.Genre_Name AS Genre,
