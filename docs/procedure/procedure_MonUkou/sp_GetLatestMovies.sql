@@ -1,6 +1,6 @@
 DELIMITER $$
 
-CREATE PROCEDURE sp_GetLatestMovies()
+CREATE PROCEDURE 'sp_GetLatestMovies'()
 BEGIN
     SELECT 
         m.Movie_Title AS MovieTitle, 
