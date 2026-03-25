@@ -32,23 +32,58 @@ class Award {
     public function getActor()      { return $this->actor_id; }
     public function getStudio()     { return $this->studio_id; }
 
-    //assignAward()
-    public function assignAward(){
+    //createAward()
+    public function createAward(){
 
         $sql = "INSERT INTO tbl_award
-                (Award_Name,Award_Info, Award_Date, Director_ID, Actor_ID, Studio_ID)
-                VALUES (?,?,?,?,?,?)";
+                (Award_Name, Award_Info, Award_Date)
+                VALUES (?,?,?)";
 
         $stmt = $this->conn->prepare($sql);
 
         $stmt->bind_param(
-            "sssiii",
+            "sss",
             $this->name,
             $this->info,
             $this->date,
-            $this->director_id,
-            $this->actor_id,
-            $this->studio_id
+        );
+
+        $stmt->execute();
+        $this->id = $this->conn->insert_id;
+        return $this->id;
+    }
+
+    //assignAwardToActor()
+    public function assignAwardToActor(){
+
+        $sql = "INSERT INTO `tbl_award-actor`
+                (Award_ID, Actor_ID)
+                VALUES (?,?)";
+
+        $stmt = $this->conn->prepare($sql);
+
+        $stmt->bind_param(
+            "ii",
+            $this->id,
+            $this->actor_id
+        );
+
+        return $stmt->execute();
+    }
+
+    //assignAwardToDirector()
+    public function assignAwardToDirector(){
+
+        $sql = "INSERT INTO `tbl_award-director`
+                (Award_ID, Director_ID)
+                VALUES (?,?)";
+
+        $stmt = $this->conn->prepare($sql);
+
+        $stmt->bind_param(
+            "ii",
+            $this->id,
+            $this->director_id
         );
 
         return $stmt->execute();
