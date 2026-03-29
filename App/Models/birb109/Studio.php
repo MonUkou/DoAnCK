@@ -103,5 +103,17 @@ class Studio {
             'social_url' => $this->getStudio_Social_Url()
         ];
     }
+     // Chờ SP: sp_GetMoviesByStudio(?)
+    public function getMoviesByStudio(int $studioId): array {
+        try {
+            // TODO: Thay bằng CALL sp_GetMoviesByStudio(?) khi có SP
+            $stmt = $this->pdo->prepare("CALL sp_GetMoviesByStudio(?)");
+            $stmt->execute([$studioId]);
+            return $stmt->fetchAll(PDO::FETCH_OBJ) ?: [];
+        } catch(PDOException $e) {
+            error_log("Error in getMoviesByStudio: " . $e->getMessage());
+            return [];
+        }
+    }
 }
 ?>
