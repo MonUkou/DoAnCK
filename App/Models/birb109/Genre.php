@@ -65,17 +65,5 @@ class Genre {
             return [];
         }
     }
-
-    // sp_GetMovieStatsByGenre 
-    public function getMovieStatsByGenre(int $genreId): array {
-        try {
-            $stmt = $this->pdo->prepare("CALL sp_GetMovieStatsByGenre(?)");
-            $stmt->execute([$genreId]);
-            return $stmt->fetchAll(PDO::FETCH_OBJ) ?: [];
-        } catch(PDOException $e) {
-            error_log("Error in getMovieStatsByGenre: " . $e->getMessage());
-            return [];
-        }
-    }
 }
 ?>
