@@ -1,0 +1,17 @@
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_GetMoviesByStudio`(IN `Movie_ID` INT)
+BEGIN
+    SELECT 
+        m.Movie_ID,
+        m.Movie_Title,
+        m.Movie_Description,
+        m.Movie_Img,
+        m.Movie_ReleaseDate,
+        m.Movie_StreamingDate,
+        s.Studio_Name
+    FROM tbl_movie m
+    INNER JOIN tbl_movie_studio ms ON m.Movie_ID = ms.Movie_ID
+    INNER JOIN tbl_studio s ON ms.Studio_ID = s.Studio_ID
+    WHERE ms.Studio_ID = @Studio_ID;
+END$$
+DELIMITER ;
