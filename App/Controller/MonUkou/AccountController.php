@@ -1,5 +1,4 @@
 <?php
-namespace App\Controllers\MonUkou;
 
 use Account; // Hoặc đường dẫn đúng tới file Model Account.php
 
