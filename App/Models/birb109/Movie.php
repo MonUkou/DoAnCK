@@ -304,7 +304,7 @@ public function getStudiosByMovie($movie_id) {
         $stmt->execute([$movie_id]);
 
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $stmt->closeCursor(); // 🔥 bắt buộc khi dùng SP
+        $stmt->closeCursor();
 
         return $data;
     } catch (PDOException $e) {
