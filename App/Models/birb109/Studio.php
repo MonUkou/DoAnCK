@@ -44,7 +44,6 @@ class Studio {
 
     public function getStudio_Social_Url() {
         if(!empty($this->Studio_Social)) {
-            // Thêm https:// nếu chưa có
             if(!preg_match('/^https?:\/\//', $this->Studio_Social)) {
                 return 'https://' . $this->Studio_Social;
             }
