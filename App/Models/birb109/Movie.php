@@ -36,7 +36,6 @@ class Movie {
         $this->Account_ID = $account_id;  
     }
 
-    // Getter methods 
     public function getMovie_ID() {
         return $this->Movie_ID;
     }
