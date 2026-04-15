@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/../../../Config/database.php';
 
 class Movie {
     private $conn;
@@ -18,9 +18,8 @@ class Movie {
     private $Account_ID;  
 
     public function __construct() {
-        $database = new Database();
-        $this->conn = $database->getConnection();
-    }
+    $this->conn = Database::getInstance()->getConnection();
+}
 
     // Setter 
     public function setMovie($id, $title, $desc=null, $img, $genre_id, $relDate=null, $streamDate = null, $studio_id, $director_id, $actor_id, $account_id) {  
@@ -104,21 +103,6 @@ class Movie {
         return $this->Account_ID;
     }
 
-    // Hiển thị danh sách phim 
-    public function getAllMovies() {
-        $query = "SELECT m.*, g.Genre_Name, s.Studio_Name, d.Director_Name, a.Username 
-                  FROM " . $this->table_name . " m
-                  LEFT JOIN tbl_genre g ON FIND_IN_SET(g.Genre_ID, m.Genre_ID)
-                  LEFT JOIN tbl_studio s ON m.Studio_ID = s.Studio_ID
-                  LEFT JOIN tbl_director d ON m.Director_ID = d.Director_ID
-                  LEFT JOIN tbl_account a ON m.Account_ID = a.Account_ID
-                  GROUP BY m.Movie_ID
-                  ORDER BY m.Movie_ReleaseDate DESC";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
     // Chi tiết phim 
     public function getDetails() {
         $query = "SELECT m.*, s.Studio_Name, s.Studio_Info, d.Director_Name, d.Director_Info, a.Username, a.Account_img
@@ -132,7 +116,43 @@ class Movie {
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+    public function getFullDetail($movie_id) {
+    try {
+        $stmt = $this->conn->prepare("CALL sp_GetMovieFullDetail(?)");
+        $stmt->execute([$movie_id]);
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt->closeCursor(); 
 
+        return $data;
+    } catch (PDOException $e) {
+        error_log($e->getMessage());
+        return null;
+    }
+    }
+    public function getDirectorsByMovie($movie_id) {
+    $stmt = $this->conn->prepare("CALL sp_GetDirectorsByMovie(?)");
+    $stmt->execute([$movie_id]);
+    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $stmt->closeCursor();
+    return $data;
+}
+
+public function getStudiosByMovie($movie_id) {
+    $stmt = $this->conn->prepare("CALL sp_GetStudiosByMovie(?)");
+    $stmt->execute([$movie_id]);
+    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $stmt->closeCursor();
+    return $data;
+}
+
+    public function getGenresByMovie($movie_id) {
+    $stmt = $this->conn->prepare("CALL sp_GetGenresByMovie(?)");
+    $stmt->execute([$movie_id]);
+    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $stmt->closeCursor();
+
+    return $data;
+}
     // Search phim theo ten gan dung
     public function searchMovies($keyword) {
         $query = "SELECT m.*, s.Studio_Name 
@@ -214,7 +234,6 @@ class Movie {
         ];
     }
 
-    // sp_GetAllMovies()
     public function getAllMovies(): array {
         try {
             $stmt = $this->pdo->prepare("CALL sp_GetAllMovies()");
@@ -226,7 +245,6 @@ class Movie {
         }
     }
 
-    // sp_SearchMovieByName(IN keyword VARCHAR(128))
     public function searchMovieByName(string $keyword): array {
         try {
             $stmt = $this->pdo->prepare("CALL sp_SearchMovieByName(?)");
@@ -238,7 +256,6 @@ class Movie {
         }
     }
 
-    // sp_AddMovie() - 10 parameters theo SP definition
     public function addMovie(array $data): bool {
         try {
             $stmt = $this->pdo->prepare("CALL sp_AddMovie(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
@@ -260,7 +277,6 @@ class Movie {
         }
     }
 
-    // sp_GetLatestMovies()
     public function getLatestMovies(): array {
         try {
             $stmt = $this->pdo->prepare("CALL sp_GetLatestMovies()");
@@ -272,7 +288,6 @@ class Movie {
         }
     }
 
-    // sp_TopMoviesByViews(IN p_Limit INT)
     public function getTopMoviesByViews(int $limit = 10): array {
         try {
             $stmt = $this->pdo->prepare("CALL sp_TopMoviesByViews(?)");
@@ -283,5 +298,37 @@ class Movie {
             return [];
         }
     }
+    public function getActorsByMovie($movie_id) {
+    try {
+        $stmt = $this->conn->prepare("CALL sp_GetActorsByMovie(?)");
+        $stmt->execute([$movie_id]);
+
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt->closeCursor(); // 🔥 bắt buộc khi dùng SP
+
+        return $data;
+    } catch (PDOException $e) {
+        error_log($e->getMessage());
+        return [];
+    }
 }
+    /** Lấy actors kèm số phim tham gia */
+public function getActorsByMovieWithCount($movie_id) {
+    try {
+        $sql = "SELECT a.*, 
+                       (SELECT COUNT(*) FROM tbl_character c WHERE c.Actor_ID = a.Actor_ID) as movie_count
+                FROM tbl_character c
+                JOIN tbl_actor a ON c.Actor_ID = a.Actor_ID
+                WHERE c.Movie_ID = ?
+                GROUP BY a.Actor_ID
+                ORDER BY a.Actor_Name";
+        
+        $stmt = $this->conn->prepare($sql);  
+        $stmt->execute([intval($movie_id)]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error in getActorsByMovieWithCount: " . $e->getMessage());
+        return [];
+    }
+}}
 ?>
