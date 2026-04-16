@@ -491,12 +491,17 @@ try {
                                                         <span><i class="fas fa-newspaper me-1"></i><?= htmlspecialchars($comment['New_Title'] ?? 'Bài viết đã xóa') ?></span>
                                                         <span><i class="fas fa-hashtag me-1"></i>ID <?= (int) $comment['Comment_ID'] ?></span>
                                                     </div>
-                                                    <div class="d-flex gap-2">
-                                                        <a href="index.php?controller=admin&action=detailpost&id=<?= (int)$comment['New_ID'] ?>" class="btn btn-outline-primary rounded-pill flex-fill">Xem tin</a>
-                                                    </div>
-                                                </div>
-                                            </article>
-                                        </div>
+                                                     <div class="d-flex gap-2">
+                                                         <a href="index.php?controller=admin&action=detailpost&id=<?= (int)$comment['New_ID'] ?>" class="btn btn-outline-primary rounded-pill flex-fill">Xem tin</a>
+                                                         <button type="button"
+                                                                 class="btn btn-outline-danger rounded-pill flex-fill js-delete-comment"
+                                                                 data-comment-id="<?= (int) $comment['Comment_ID'] ?>">
+                                                             Xóa
+                                                         </button>
+                                                     </div>
+                                                 </div>
+                                             </article>
+                                         </div>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
                             <?php else: ?>
@@ -586,3 +591,46 @@ try {
 
 </body>
 </html>
+<script>
+document.querySelectorAll('.js-delete-comment').forEach(button => {
+    button.addEventListener('click', async () => {
+        const commentId = button.dataset.commentId;
+
+        if (!commentId || !confirm('Bạn có chắc muốn xóa bình luận này?')) {
+            return;
+        }
+
+        const card = button.closest('.col-md-6.col-xl-4');
+        const originalLabel = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Đang xóa...';
+
+        try {
+            const response = await fetch('index.php?controller=comment&action=delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                },
+                body: `comment_id=${encodeURIComponent(commentId)}`
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.message || 'Không thể xóa bình luận');
+            }
+
+            if (card) {
+                card.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.96)';
+                setTimeout(() => card.remove(), 250);
+            }
+        } catch (error) {
+            alert(error.message || 'Xóa bình luận thất bại');
+            button.disabled = false;
+            button.textContent = originalLabel;
+        }
+    });
+});
+</script>
