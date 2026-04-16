@@ -47,7 +47,7 @@ class ActorController {
 
     $GLOBALS['actor'] = $actor;
     $GLOBALS['movies'] = $movies;
-    $GLOBALS['movieCount'] = $movieCount; // ✅
+    $GLOBALS['movieCount'] = $movieCount;
     $GLOBALS['pageTitle'] = $actor->Actor_Name;
 
     include __DIR__ . '/../../Views/Member/actor/profile.php';
