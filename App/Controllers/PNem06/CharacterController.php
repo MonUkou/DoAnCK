@@ -7,6 +7,7 @@ class CharacterController {
     public function __construct() {
         $this->conn = Database::getInstance()->getConnection();
     }
+
     public function getCharactersByMovie($movie_id) {
         try {
             $sql = "SELECT 
@@ -27,7 +28,6 @@ class CharacterController {
             
             $characters = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // Map dữ liệu nhân vật để trả về cho chi tiết phim
             $result = [];
             foreach ($characters as $char) {
                 $result[] = [
@@ -41,7 +41,6 @@ class CharacterController {
                     ]
                 ];
             }
-            
             return $result;
         } catch (PDOException $e) {
             error_log($e->getMessage());
