@@ -6,7 +6,7 @@ class StudioController {
         $this->db = $db;
     }
 
-    // Danh sách hãng phim
+    // index(): Danh sách hãng phim
     public function index() {
         try {
             $sql = "SELECT * FROM tbl_studio ORDER BY Studio_Name ASC";
