@@ -11,71 +11,136 @@ class SearchController {
     }
 
     public function ajax() {
-    if (ob_get_level()) ob_clean();
-    header('Content-Type: application/json; charset=utf-8');
-    header('Access-Control-Allow-Origin: *');
-    
-    $context = $_GET['context'] ?? 'global';
-    $keyword = trim($_GET['keyword'] ?? '');
+        if (ob_get_level()) {
+            ob_clean();
+        }
 
-    if (empty($keyword)) {
-        echo json_encode([]);
+        header('Content-Type: application/json; charset=utf-8');
+
+        $context = $_GET['context'] ?? 'global';
+        $keyword = trim($_GET['keyword'] ?? '');
+        $requestedLimit = max(1, min(20, (int) ($_GET['limit'] ?? 0)));
+
+        if ($keyword === '') {
+            echo json_encode([]);
+            exit;
+        }
+
+        $like = '%' . $keyword . '%';
+        $results = [];
+
+        try {
+            if ($context === 'home') {
+                $results = array_merge(
+                    $this->searchMovies($like, $requestedLimit > 0 ? min($requestedLimit, 8) : 5),
+                    $this->searchActors($like, $requestedLimit > 0 ? min($requestedLimit, 6) : 4),
+                    $this->searchNews($like, $requestedLimit > 0 ? min($requestedLimit, 6) : 3)
+                );
+            } elseif ($context === 'movies') {
+                $results = $this->searchMovies($like, $requestedLimit ?: 12);
+            } elseif ($context === 'actors') {
+                $results = $this->searchActors($like, $requestedLimit ?: 12);
+            } elseif ($context === 'movie') {
+                $results = $this->searchMovies($like, $requestedLimit ?: 10);
+            } elseif ($context === 'actor') {
+                $results = $this->searchActors($like, $requestedLimit ?: 10);
+            } elseif ($context === 'news') {
+                $results = $this->searchNewsByCategory($like, $requestedLimit ?: 10);
+            }
+
+            echo json_encode($results, JSON_UNESCAPED_UNICODE);
+        } catch (\Exception $e) {
+            echo json_encode(['error' => $e->getMessage()]);
+        }
         exit;
     }
 
-    $like = '%' . $keyword . '%';
-    $results = [];
-
-    try {
-        if ($context === 'home') {
-            $results = array_merge(
-                $this->searchMovies($like, 5),
-                $this->searchActors($like, 4),
-                $this->searchNews($like, 3)
-            );
-        }
-        elseif ($context === 'movies') {
-            $results = $this->searchMovies($like, 12);
-        } 
-        elseif ($context === 'actors') {
-            $results = $this->searchActors($like, 12);
-        }
-        elseif ($context === 'movie') {
-            $results = $this->searchMovies($like, 10);
-        }
-        elseif ($context === 'actor') {
-            $results = $this->searchActors($like, 10);
-        }
-        elseif ($context === 'news') {
-            $results = $this->searchNewsByCategory($like, 10);
+    public function cards() {
+        if (ob_get_level()) {
+            ob_clean();
         }
 
-        echo json_encode($results, JSON_UNESCAPED_UNICODE);
-    } catch (Exception $e) {
-        echo json_encode(['error' => $e->getMessage()]);
+        header('Content-Type: application/json; charset=utf-8');
+
+        $keyword = trim($_GET['keyword'] ?? '');
+        $context = $_GET['context'] ?? 'home';
+        $limit = max(1, min(24, (int) ($_GET['limit'] ?? 12)));
+
+        if ($keyword === '') {
+            echo json_encode([
+                'success' => true,
+                'keyword' => '',
+                'results' => []
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+
+        $like = '%' . $keyword . '%';
+        $sql = "SELECT n.New_ID, n.New_Title, n.New_Description, n.New_Content, n.New_Img,
+                       n.New_Category, n.New_PublishDate, a.Username
+                FROM tbl_new n
+                LEFT JOIN tbl_account a ON n.Account_ID = a.Account_ID
+                WHERE n.New_Status = 'Publish'
+                  AND n.New_Title LIKE ?";
+
+        if ($context === 'movies') {
+            $sql .= " AND n.New_Category = 'Movie'";
+        } elseif ($context === 'actors') {
+            $sql .= " AND n.New_Category = 'Actor'";
+        }
+
+        $sql .= " ORDER BY n.New_PublishDate DESC LIMIT ?";
+
+        $stmt = $this->mysqli->prepare($sql);
+        $stmt->bind_param('si', $like, $limit);
+        $stmt->execute();
+        $res = $stmt->get_result();
+
+        $results = [];
+        while ($row = $res->fetch_assoc()) {
+            $shortDesc = trim(substr(strip_tags($row['New_Description'] ?: $row['New_Content'] ?: ''), 0, 150));
+            $results[] = [
+                'id' => (int) $row['New_ID'],
+                'title' => $row['New_Title'],
+                'image' => $row['New_Img'] ?? '',
+                'category' => $row['New_Category'] ?? 'Movie',
+                'category_label' => ($row['New_Category'] ?? 'Movie') === 'Actor' ? 'Diễn viên' : 'Phim ảnh',
+                'description' => $shortDesc !== '' ? $shortDesc . '...' : '...',
+                'publish_date' => $row['New_PublishDate'],
+                'username' => $row['Username'] ?? ''
+            ];
+        }
+
+        echo json_encode([
+            'success' => true,
+            'keyword' => $keyword,
+            'results' => $results
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
     }
-    exit;
-}
-private function searchNewsByCategory($like, $limit = 10) {
-    $results = [];
-    $sql = "SELECT New_ID, New_Title, New_Category FROM tbl_new 
-            WHERE New_Title LIKE ? AND New_Status = 'Publish' 
-            ORDER BY New_PublishDate DESC LIMIT ?";
-    $stmt = $this->mysqli->prepare($sql);
-    $stmt->bind_param("si", $like, $limit);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    
-    while ($row = $res->fetch_assoc()) {
-        $type = $row['New_Category'] === 'Actor' ? '📰 Tin sao' : '📰 Tin phim';
-        $results[] = [
-            "title" => $row['New_Title'],
-            "type" => $type,
-            "link" => "index.php?controller=news&action=showDetail&id=" . $row['New_ID']
-        ];
+
+    private function searchNewsByCategory($like, $limit = 10) {
+        $results = [];
+        $sql = "SELECT New_ID, New_Title, New_Category
+                FROM tbl_new
+                WHERE New_Title LIKE ? AND New_Status = 'Publish'
+                ORDER BY New_PublishDate DESC
+                LIMIT ?";
+        $stmt = $this->mysqli->prepare($sql);
+        $stmt->bind_param("si", $like, $limit);
+        $stmt->execute();
+        $res = $stmt->get_result();
+
+        while ($row = $res->fetch_assoc()) {
+            $type = $row['New_Category'] === 'Actor' ? 'Tin sao' : 'Tin phim';
+            $results[] = [
+                'title' => $row['New_Title'],
+                'type' => $type,
+                'link' => 'index.php?controller=news&action=showDetail&id=' . $row['New_ID']
+            ];
+        }
+        return $results;
     }
-    return $results;
-}
 
     private function searchMovies($like, $limit = 10) {
         $results = [];
@@ -84,12 +149,12 @@ private function searchNewsByCategory($like, $limit = 10) {
         $stmt->bind_param("si", $like, $limit);
         $stmt->execute();
         $res = $stmt->get_result();
-        
+
         while ($row = $res->fetch_assoc()) {
             $results[] = [
-                "title" => $row['Movie_Title'],
-                "type" => "🎬 Phim", 
-                "link" => "index.php?controller=movie&action=showDetail&id=" . $row['Movie_ID']
+                'title' => $row['Movie_Title'],
+                'type' => 'Phim',
+                'link' => 'index.php?controller=movie&action=showDetail&id=' . $row['Movie_ID']
             ];
         }
         return $results;
@@ -102,12 +167,12 @@ private function searchNewsByCategory($like, $limit = 10) {
         $stmt->bind_param("si", $like, $limit);
         $stmt->execute();
         $res = $stmt->get_result();
-        
+
         while ($row = $res->fetch_assoc()) {
             $results[] = [
-                "title" => $row['Actor_Name'],
-                "type" => "👤 Diễn viên",
-                "link" => "index.php?controller=actor&action=showProfile&id=" . $row['Actor_ID']
+                'title' => $row['Actor_Name'],
+                'type' => 'Diễn viên',
+                'link' => 'index.php?controller=actor&action=showProfile&id=' . $row['Actor_ID']
             ];
         }
         return $results;
@@ -115,20 +180,19 @@ private function searchNewsByCategory($like, $limit = 10) {
 
     private function searchNews($like, $limit = 10) {
         $results = [];
-        $sql = "SELECT New_ID, New_Title FROM tbl_new WHERE New_Title LIKE ? ORDER BY New_Title LIMIT ?";
+        $sql = "SELECT New_ID, New_Title FROM tbl_new WHERE New_Title LIKE ? AND New_Status = 'Publish' ORDER BY New_PublishDate DESC LIMIT ?";
         $stmt = $this->mysqli->prepare($sql);
         $stmt->bind_param("si", $like, $limit);
         $stmt->execute();
         $res = $stmt->get_result();
-        
+
         while ($row = $res->fetch_assoc()) {
             $results[] = [
-                "title" => $row['New_Title'],
-                "type" => "📰 Tin tức",
-                "link" => "index.php?controller=news&action=showDetail&id=" . $row['New_ID']
+                'title' => $row['New_Title'],
+                'type' => 'Tin tức',
+                'link' => 'index.php?controller=news&action=showDetail&id=' . $row['New_ID']
             ];
         }
         return $results;
     }
 }
-?>
