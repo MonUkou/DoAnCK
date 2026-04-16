@@ -8,7 +8,7 @@ class MovieController {
         $this->db = $db ?? Database::getInstance()->getConnection();
     }
     
-    //DANH SÁCH PHIM - PHÂN TRANG (6 phim/trang) 
+    
     public function index($page = 1) {
         $limit = 6;
         $offset = ($page - 1) * $limit;
@@ -25,8 +25,7 @@ class MovieController {
         
         include __DIR__ . '/../../Views/Member/movie/list.php';
     }
-    
-    /* CHI TIẾT PHIM - HOÀN CHỈNH */
+   
     public function showDetail($movie_id) {
         require_once __DIR__ . '/../../Models/birb109/Movie.php';
         $movieModel = new Movie();
