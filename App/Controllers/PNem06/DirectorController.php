@@ -9,23 +9,18 @@ class DirectorController {
         $this->directorModel = new Director();
     }
     
-    /** Hiển thị danh sách phim của đạo diễn */
     public function showMovies($director_id) {
-        // Lấy thông tin đạo diễn
         $director = $this->getDirectorById($director_id);
         
         if (!$director) {
             die('Đạo diễn không tồn tại');
         }
         
-        // Lấy danh sách phim (dùng stored procedure có sẵn)
         $movies = $this->directorModel->getMoviesByDirector($director_id);
         
-        // Load view
         include_once __DIR__ . '/../Views/director/movies.php';
     }
     
-    /** Lấy thông tin đạo diễn theo ID */
     private function getDirectorById($director_id) {
         try {
             $conn = Database::getInstance()->getConnection();
