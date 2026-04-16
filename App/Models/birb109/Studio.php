@@ -15,6 +15,7 @@ class Studio {
         $this->conn = $database->getConnection();
     }
 
+    // Setter 
     public function setStudio($id, $name, $info = null, $social = null) {
         $this->Studio_ID = $id;
         $this->Studio_Name = $name;
@@ -22,6 +23,7 @@ class Studio {
         $this->Studio_Social = $social;  
     }
 
+    // Getter methods
     public function getStudio_ID() {
         return $this->Studio_ID;
     }
@@ -44,6 +46,7 @@ class Studio {
 
     public function getStudio_Social_Url() {
         if(!empty($this->Studio_Social)) {
+            // Thêm https:// nếu chưa có
             if(!preg_match('/^https?:\/\//', $this->Studio_Social)) {
                 return 'https://' . $this->Studio_Social;
             }
@@ -52,6 +55,7 @@ class Studio {
         return null;
     }
 
+    // Lấy tất cả hãng sản xuất
     public function getAllStudios() {
         $query = "SELECT * FROM " . $this->table_name . " ORDER BY Studio_Name";
         $stmt = $this->conn->prepare($query);
@@ -59,6 +63,7 @@ class Studio {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // Lấy thông tin chi tiết hãng
     public function getDetails() {
         $query = "SELECT * FROM " . $this->table_name . " WHERE Studio_ID = :id";
         $stmt = $this->conn->prepare($query);
@@ -78,6 +83,7 @@ class Studio {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // Tìm kiếm studio theo tên
     public function searchByName($keyword) {
         $query = "SELECT * FROM " . $this->table_name . " WHERE Studio_Name LIKE :keyword ORDER BY Studio_Name";
         $stmt = $this->conn->prepare($query);
@@ -87,6 +93,7 @@ class Studio {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // Phương thức tiện ích: lấy tất cả
     public function getAllData() {
         return [
             'id' => $this->getStudio_ID(),
@@ -96,8 +103,10 @@ class Studio {
             'social_url' => $this->getStudio_Social_Url()
         ];
     }
+     // Chờ SP: sp_GetMoviesByStudio(?)
     public function getMoviesByStudio(int $studioId): array {
         try {
+            // TODO: Thay bằng CALL sp_GetMoviesByStudio(?) khi có SP
             $stmt = $this->pdo->prepare("CALL sp_GetMoviesByStudio(?)");
             $stmt->execute([$studioId]);
             return $stmt->fetchAll(PDO::FETCH_OBJ) ?: [];
