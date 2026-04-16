@@ -17,8 +17,7 @@ class AwardController {
         while ($row = $result->fetch_assoc()) {
             $awards[] = $row;
         }
-        
-        // Lấy top diễn viên theo giải thưởng (dùng stored procedure)
+
         $topActorsResult = $this->awardModel->getTopActors();
         $topActors = [];
         while ($row = $topActorsResult->fetch_assoc()) {
