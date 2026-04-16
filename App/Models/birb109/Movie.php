@@ -36,6 +36,7 @@ class Movie {
         $this->Account_ID = $account_id;  
     }
 
+    // Getter methods 
     public function getMovie_ID() {
         return $this->Movie_ID;
     }
@@ -233,6 +234,7 @@ public function getStudiosByMovie($movie_id) {
         ];
     }
 
+    // sp_GetAllMovies()
     public function getAllMovies(): array {
         try {
             $stmt = $this->pdo->prepare("CALL sp_GetAllMovies()");
@@ -244,6 +246,7 @@ public function getStudiosByMovie($movie_id) {
         }
     }
 
+    // sp_SearchMovieByName(IN keyword VARCHAR(128))
     public function searchMovieByName(string $keyword): array {
         try {
             $stmt = $this->pdo->prepare("CALL sp_SearchMovieByName(?)");
@@ -255,6 +258,7 @@ public function getStudiosByMovie($movie_id) {
         }
     }
 
+    // sp_AddMovie() - 10 parameters theo SP definition
     public function addMovie(array $data): bool {
         try {
             $stmt = $this->pdo->prepare("CALL sp_AddMovie(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
@@ -276,6 +280,7 @@ public function getStudiosByMovie($movie_id) {
         }
     }
 
+    // sp_GetLatestMovies()
     public function getLatestMovies(): array {
         try {
             $stmt = $this->pdo->prepare("CALL sp_GetLatestMovies()");
@@ -287,6 +292,7 @@ public function getStudiosByMovie($movie_id) {
         }
     }
 
+    // sp_TopMoviesByViews(IN p_Limit INT)
     public function getTopMoviesByViews(int $limit = 10): array {
         try {
             $stmt = $this->pdo->prepare("CALL sp_TopMoviesByViews(?)");
@@ -303,7 +309,7 @@ public function getStudiosByMovie($movie_id) {
         $stmt->execute([$movie_id]);
 
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $stmt->closeCursor();
+        $stmt->closeCursor(); // 🔥 bắt buộc khi dùng SP
 
         return $data;
     } catch (PDOException $e) {
@@ -311,7 +317,8 @@ public function getStudiosByMovie($movie_id) {
         return [];
     }
 }
-    /** Lấy actors kèm số phim tham gia */
+   
+// THÊM VÀO class Movie - SỬA $this->conn thay vì $this->db
 public function getActorsByMovieWithCount($movie_id) {
     try {
         $sql = "SELECT a.*, 
@@ -322,7 +329,7 @@ public function getActorsByMovieWithCount($movie_id) {
                 GROUP BY a.Actor_ID
                 ORDER BY a.Actor_Name";
         
-        $stmt = $this->conn->prepare($sql);  
+        $stmt = $this->conn->prepare($sql); 
         $stmt->execute([intval($movie_id)]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
@@ -331,3 +338,4 @@ public function getActorsByMovieWithCount($movie_id) {
     }
 }}
 ?>
+
