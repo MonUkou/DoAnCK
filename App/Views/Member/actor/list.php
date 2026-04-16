@@ -2,7 +2,7 @@
 $actors = $GLOBALS['actors'] ?? [];
 $currentPage = $GLOBALS['currentPage'] ?? 1;
 $totalPages = $GLOBALS['totalPages'] ?? 1;
-$pageTitle = $GLOBALS['pageTitle'] ?? 'Danh sach dien vien';
+$pageTitle = $GLOBALS['pageTitle'] ?? 'Danh sách diễn viên';
 $totalActors = $GLOBALS['totalActors'] ?? count($actors);
 $searchKeyword = $GLOBALS['searchKeyword'] ?? '';
 ?>
@@ -11,12 +11,12 @@ $searchKeyword = $GLOBALS['searchKeyword'] ?? '';
         <h2 class="text-white mb-4 text-center">
             <i class="fas fa-users me-2"></i>
             <?php if ($searchKeyword !== ''): ?>
-                Ket qua dien vien: "<?= htmlspecialchars($searchKeyword) ?>"
+                Kết quả diễn viên: "<?= htmlspecialchars($searchKeyword) ?>"
             <?php else: ?>
                 <?= $pageTitle ?>
             <?php endif; ?>
         </h2>
-        <p class="text-center text-white-50"><?= number_format($totalActors) ?> dien vien</p>
+        <p class="text-center text-white-50"><?= number_format($totalActors) ?> diễn viên</p>
     </div>
 </div>
 
@@ -50,7 +50,7 @@ $searchKeyword = $GLOBALS['searchKeyword'] ?? '';
                     </p>
                     <a href="index.php?controller=actor&action=detail&id=<?= $actor->Actor_ID ?>"
                        class="btn btn-primary w-100 mt-auto">
-                        <i class="fas fa-eye me-2"></i>Xem tieu su
+                        <i class="fas fa-eye me-2"></i>Xem tiểu sử
                     </a>
                 </div>
             </div>
@@ -60,7 +60,7 @@ $searchKeyword = $GLOBALS['searchKeyword'] ?? '';
         <div class="col-12">
             <div class="text-center py-5">
                 <i class="fas fa-users-slash fa-3x text-muted mb-3"></i>
-                <h4 class="text-muted">Chua co dien vien nao</h4>
+                <h4 class="text-muted">Chưa có diễn viên nào</h4>
             </div>
         </div>
     <?php endif; ?>
@@ -69,7 +69,7 @@ $searchKeyword = $GLOBALS['searchKeyword'] ?? '';
 <?php if ($totalPages > 1): ?>
 <div class="row mt-5">
     <div class="col-12">
-        <nav aria-label="Danh sach dien vien">
+        <nav aria-label="Danh sách diễn viên">
             <ul class="pagination justify-content-center">
                 <?php
                 $baseUrl = '?controller=actor';
