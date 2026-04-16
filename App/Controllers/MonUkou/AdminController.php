@@ -6,14 +6,16 @@ require_once __DIR__ . '/../../../Config/database.php';
 
 class AdminController {
     private $mysqli;
+    private $newsUploadDir;
 
     public function __construct() {
         require_once __DIR__ . '/../../../Config/config.php';
-        $this->mysqli = new \mysqli(HOST, USER, PASSWORD, DB);  
+        $this->mysqli = new \mysqli(HOST, USER, PASSWORD, DB);
         if ($this->mysqli->connect_error) {
             die("Connection failed: " . $this->mysqli->connect_error);
         }
         $this->mysqli->set_charset('utf8mb4');
+        $this->newsUploadDir = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'news';
     }
 
     public function dashboard() {
@@ -40,7 +42,6 @@ class AdminController {
         $itemsPerPage = 9;
 
         try {
-            // Stats
             $countQueries = [
                 'total_news' => "SELECT COUNT(*) AS total FROM tbl_new",
                 'movie_news' => "SELECT COUNT(*) AS total FROM tbl_new WHERE New_Category = 'Movie'",
@@ -55,7 +56,6 @@ class AdminController {
                 }
             }
 
-            // Filter logic
             $whereClause = '';
             if ($selectedFilter === 'movie') {
                 $whereClause = "WHERE n.New_Category = 'Movie'";
@@ -84,7 +84,6 @@ class AdminController {
             }
             $offset = ($page - 1) * $itemsPerPage;
 
-            // Load data
             if ($isCommentView) {
                 $commentSql = "SELECT c.Comment_ID, c.Comment_Data, c.Comment_Date, c.New_ID,
                                       a.Username, n.New_Title
@@ -113,7 +112,7 @@ class AdminController {
                 if ($newsResult) {
                     while ($row = $newsResult->fetch_assoc()) {
                         $summary = trim(substr(strip_tags($row['New_Description'] ?: $row['New_Content'] ?: ''), 0, 120));
-                        $row['short_desc'] = $summary !== '' ? $summary . '...' : 'Chưa có mô tả cho bài viết này.';
+                        $row['short_desc'] = $summary !== '' ? $summary . '...' : 'Chua co mo ta cho bai viet nay.';
                         $newsList[] = $row;
                     }
                 }
@@ -137,8 +136,7 @@ class AdminController {
             $GLOBALS['page'] = $page;
             $GLOBALS['dbError'] = $dbError;
             $GLOBALS['pageTitle'] = 'Admin Dashboard';
-
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $GLOBALS['dbError'] = $e->getMessage();
         }
 
@@ -171,9 +169,8 @@ class AdminController {
         $accountId = $_SESSION['user_obj']->getId();
         $error = null;
         $success = null;
-        $postId = $mode === 'edit' ? (isset($_GET['id']) ? intval($_GET['id']) : 0) : 0;
+        $postId = $mode === 'edit' ? intval($_GET['id'] ?? 0) : 0;
 
-        // Get available status options
         $availableStatusOptions = [];
         $statusFieldResult = $this->mysqli->query("SHOW COLUMNS FROM tbl_new LIKE 'New_Status'");
         if ($statusFieldResult) {
@@ -202,31 +199,49 @@ class AdminController {
         ];
 
         $allowedCategories = ['Movie', 'Actor'];
+        $tableColumns = $this->getTableColumns();
+        $hasCategoryField = in_array('New_Category', $tableColumns, true);
+        $existingPost = null;
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $news['New_Title'] = trim($_POST['New_Title'] ?? '');
-            $news['New_Description'] = trim($_POST['New_Description'] ?? '');
-            $news['New_Content'] = trim($_POST['New_Content'] ?? '');
-            $news['New_Img'] = trim($_POST['New_Img'] ?? '');
-            $news['New_Category'] = in_array($_POST['New_Category'] ?? 'Movie', $allowedCategories, true) ? $_POST['New_Category'] : 'Movie';
-            $submittedStatus = trim($_POST['New_Status'] ?? $news['New_Status']);
-            $news['New_Status'] = in_array($submittedStatus, $availableStatusOptions, true) ? $submittedStatus : $news['New_Status'];
-
-            if ($news['New_Title'] === '' || $news['New_Content'] === '') {
-                $error = 'Tiêu đề và nội dung là bắt buộc.';
+        if ($mode === 'edit') {
+            if ($postId <= 0) {
+                $error = 'ID bai viet khong hop le.';
             } else {
-                if ($mode === 'add') {
-                    $this->insertPost($news, $accountId, $availableStatusOptions);
+                $existingPost = $this->getPostById($postId);
+                if (!$existingPost) {
+                    $error = 'Khong tim thay bai viet.';
                 } else {
-                    $this->updatePost($news, $postId);
+                    $news = array_merge($news, $existingPost);
                 }
             }
         }
 
-        if ($mode === 'edit' && $_SERVER['REQUEST_METHOD'] !== 'POST' && !$error) {
-            $news = $this->getPostById($postId);
-            if (!$news) {
-                $error = 'Không tìm thấy bài viết.';
+        if (!$error && $_SERVER['REQUEST_METHOD'] === 'POST') {
+            $news['New_Title'] = trim($_POST['New_Title'] ?? '');
+            $news['New_Description'] = trim($_POST['New_Description'] ?? '');
+            $news['New_Content'] = trim($_POST['New_Content'] ?? '');
+            $news['New_Img'] = trim($_POST['existing_New_Img'] ?? ($existingPost['New_Img'] ?? ''));
+            if ($hasCategoryField) {
+                $news['New_Category'] = in_array($_POST['New_Category'] ?? 'Movie', $allowedCategories, true) ? $_POST['New_Category'] : 'Movie';
+            }
+            $submittedStatus = trim($_POST['New_Status'] ?? $news['New_Status']);
+            $news['New_Status'] = in_array($submittedStatus, $availableStatusOptions, true) ? $submittedStatus : $news['New_Status'];
+
+            if ($news['New_Title'] === '' || $news['New_Content'] === '') {
+                $error = 'Tieu de va noi dung la bat buoc.';
+            } else {
+                $imageResult = $this->handleNewsImageUpload('New_Img', $news['New_Img']);
+                if ($imageResult['error'] !== null) {
+                    $error = $imageResult['error'];
+                } else {
+                    $news['New_Img'] = $imageResult['filename'];
+
+                    if ($mode === 'add') {
+                        $this->insertPost($news, $accountId, $tableColumns);
+                    } else {
+                        $this->updatePost($news, $postId, $tableColumns);
+                    }
+                }
             }
         }
 
@@ -235,22 +250,15 @@ class AdminController {
         $GLOBALS['success'] = $success;
         $GLOBALS['availableStatusOptions'] = $availableStatusOptions;
         $GLOBALS['allowedCategories'] = $allowedCategories;
+        $GLOBALS['hasCategoryField'] = $hasCategoryField;
         $GLOBALS['mode'] = $mode;
         $GLOBALS['postId'] = $postId;
-        $GLOBALS['pageTitle'] = $mode === 'add' ? 'Thêm bài viết' : 'Chỉnh sửa bài viết';
+        $GLOBALS['pageTitle'] = $mode === 'add' ? 'Them bai viet' : 'Chinh sua bai viet';
 
         include __DIR__ . '/../../../App/Views/admin/' . $mode . 'post.php';
     }
 
-    private function insertPost($news, $accountId, $availableStatusOptions) {
-        $tableColumns = [];
-        $columnsResult = $this->mysqli->query('DESCRIBE tbl_new');
-        if ($columnsResult) {
-            while ($row = $columnsResult->fetch_assoc()) {
-                $tableColumns[] = $row['Field'];
-            }
-        }
-
+    private function insertPost($news, $accountId, $tableColumns) {
         $insertFields = ['New_Title', 'New_Description', 'New_Content', 'New_Img', 'New_Status', 'New_PublishDate', 'Account_ID'];
         $insertValues = [
             $news['New_Title'],
@@ -301,7 +309,7 @@ class AdminController {
         }
     }
 
-    private function updatePost($news, $postId) {
+    private function updatePost($news, $postId, $tableColumns) {
         $fieldsToUpdate = ['New_Title = ?', 'New_Description = ?', 'New_Content = ?', 'New_Img = ?', 'New_Status = ?'];
         $values = [
             $news['New_Title'],
@@ -311,7 +319,7 @@ class AdminController {
             $news['New_Status'],
         ];
 
-        $hasCategoryField = $this->mysqli->query("DESCRIBE tbl_new")->fetch_assoc()['Field'] === 'New_Category';
+        $hasCategoryField = in_array('New_Category', $tableColumns, true);
         if ($hasCategoryField) {
             $fieldsToUpdate[] = 'New_Category = ?';
             $values[] = $news['New_Category'];
@@ -336,6 +344,75 @@ class AdminController {
             }
             $stmt->close();
         }
+    }
+
+    private function getTableColumns() {
+        $tableColumns = [];
+        $columnsResult = $this->mysqli->query('DESCRIBE tbl_new');
+        if ($columnsResult) {
+            while ($row = $columnsResult->fetch_assoc()) {
+                $tableColumns[] = $row['Field'];
+            }
+        }
+
+        return $tableColumns;
+    }
+
+    private function handleNewsImageUpload($fieldName, $currentFilename = '') {
+        if (!isset($_FILES[$fieldName]) || !is_array($_FILES[$fieldName])) {
+            return ['filename' => $currentFilename, 'error' => null];
+        }
+
+        $file = $_FILES[$fieldName];
+        if (($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+            return ['filename' => $currentFilename, 'error' => null];
+        }
+
+        if (($file['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
+            return ['filename' => $currentFilename, 'error' => 'Tai anh len that bai. Vui long thu lai.'];
+        }
+
+        $tmpName = $file['tmp_name'] ?? '';
+        if ($tmpName === '' || !is_uploaded_file($tmpName)) {
+            return ['filename' => $currentFilename, 'error' => 'Khong nhan duoc tep anh hop le.'];
+        }
+
+        $imageInfo = @getimagesize($tmpName);
+        if ($imageInfo === false) {
+            return ['filename' => $currentFilename, 'error' => 'Chi chap nhan tep anh hop le.'];
+        }
+
+        $allowedExtensions = [
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/gif' => 'gif',
+            'image/webp' => 'webp',
+        ];
+
+        $mimeType = $imageInfo['mime'] ?? '';
+        if (!isset($allowedExtensions[$mimeType])) {
+            return ['filename' => $currentFilename, 'error' => 'Anh phai co dinh dang JPG, PNG, GIF hoac WEBP.'];
+        }
+
+        if (!is_dir($this->newsUploadDir) && !mkdir($this->newsUploadDir, 0777, true) && !is_dir($this->newsUploadDir)) {
+            return ['filename' => $currentFilename, 'error' => 'Khong the tao thu muc luu anh.'];
+        }
+
+        $baseName = pathinfo($file['name'] ?? 'news-image', PATHINFO_FILENAME);
+        $safeBaseName = preg_replace('/[^A-Za-z0-9_-]+/', '-', $baseName);
+        $safeBaseName = trim((string) $safeBaseName, '-');
+        if ($safeBaseName === '') {
+            $safeBaseName = 'news-image';
+        }
+
+        $filename = $safeBaseName . '-' . uniqid('', true) . '.' . $allowedExtensions[$mimeType];
+        $targetPath = $this->newsUploadDir . DIRECTORY_SEPARATOR . $filename;
+
+        if (!move_uploaded_file($tmpName, $targetPath)) {
+            return ['filename' => $currentFilename, 'error' => 'Khong the luu anh da tai len.'];
+        }
+
+        return ['filename' => $filename, 'error' => null];
     }
 
     private function getPostById($postId) {
@@ -392,7 +469,7 @@ class AdminController {
             }
 
             $GLOBALS['post'] = $post;
-            $GLOBALS['pageTitle'] = 'Chi tiết bài viết - ' . $post['New_Title'];
+            $GLOBALS['pageTitle'] = 'Chi tiet bai viet - ' . $post['New_Title'];
             include __DIR__ . '/../../../App/Views/admin/detailpost.php';
         }
     }
