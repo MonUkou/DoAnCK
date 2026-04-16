@@ -136,6 +136,7 @@ function formatDate($value) {
 
         .content-panel {
             padding: 30px;
+            overflow-wrap: anywhere;
         }
 
         .post-image {
@@ -174,6 +175,12 @@ function formatDate($value) {
         .metadata dd {
             margin-bottom: 12px;
             font-size: 1rem;
+        }
+        .post-content {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            max-width: 100%;
         }
 
         @media (max-width: 991px) {
@@ -216,11 +223,11 @@ function formatDate($value) {
                                 <p class="mb-0 opacity-75">Xem chi tiết bài viết và trạng thái đăng trên dashboard.</p>
                             </div>
                             <div class="d-flex gap-2">
-                                <a class="btn btn-outline-secondary rounded-pill px-4" href="dashboard.php">
+                                <a class="btn btn-outline-secondary rounded-pill px-4" href="index.php?controller=admin&action=dashboard">
                                     <i class="fas fa-arrow-left me-2"></i>Quay lại
                                 </a>
                                 <?php if ($post): ?>
-                                    <a class="btn btn-outline-warning rounded-pill px-4" href="editpost.php?id=<?= escape($post['New_ID']) ?>">
+                                    <a class="btn btn-outline-warning rounded-pill px-4" href="index.php?controller=admin&action=editpost&id=<?= escape($post['New_ID']) ?>">
                                         <i class="fas fa-pen me-2"></i>Chỉnh sửa
                                     </a>
                                     <form method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài viết này?');">
@@ -239,7 +246,7 @@ function formatDate($value) {
                         <?php endif; ?>
                         <?php if (!$error && $post): ?>
                             <?php if (!empty($post['New_Img'])): ?>
-                                <img src="<?= escape($post['New_Img']) ?>" alt="<?= escape($post['New_Title']) ?>" class="post-image w-100">
+                                <img src="uploads/news/<?= htmlspecialchars($post['New_Img'], ENT_QUOTES, 'UTF-8') ?>" alt="<?= escape($post['New_Title']) ?>" class="post-image w-100">
                             <?php endif; ?>
 
                             <div class="mb-4">
@@ -268,7 +275,7 @@ function formatDate($value) {
                                 <dd class="col-sm-8"><?= (int) $post['New_View'] ?></dd>
                             </dl>
 
-                            <div class="border rounded-4 p-4 bg-light text-dark" style="white-space: pre-wrap;">
+                            <div class="border rounded-4 p-4 bg-light text-dark post-content">
                                 <?= nl2br(escape($post['New_Content'])) ?>
                             </div>
                         <?php endif; ?>
