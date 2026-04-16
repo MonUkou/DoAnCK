@@ -9,7 +9,7 @@ class AdminController {
 
     public function __construct() {
         require_once __DIR__ . '/../../../Config/config.php';
-        $this->mysqli = new \mysqli(HOST, USER, PASSWORD, DB);  // 
+        $this->mysqli = new \mysqli(HOST, USER, PASSWORD, DB);  
         if ($this->mysqli->connect_error) {
             die("Connection failed: " . $this->mysqli->connect_error);
         }
