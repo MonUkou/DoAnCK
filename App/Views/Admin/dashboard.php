@@ -377,9 +377,9 @@ try {
                         <section class="hero-banner mb-4">
                             <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
                                 <div>
-                                    <p class="text-uppercase small mb-2 opacity-75">Bảng điều khiển quản trị</p>
-                                    <h1 class="h3 fw-bold mb-2">Quản lý nội dung đồng bộ với giao diện trang chủ</h1>
-                                    <p class="mb-0 opacity-75">Theo dõi nhanh tình trạng bài viết, danh mục và tương tác từ cùng một màn hình.</p>
+                                    <p class="text-uppercase small mb-2 opacity-75"></p>
+                                    <h1 class="h3 fw-bold mb-2">Quản lý nội dung</h1>
+                                    <p class="mb-0 opacity-75"></p>
                                 </div>
                                 <a class="btn btn-warning btn-lg rounded-pill px-4" href="index.php?controller=admin&action=addpost">
                                     <i class="fas fa-plus me-2"></i>Tạo bài viết
