@@ -31,9 +31,7 @@ class ActorController {
         include __DIR__ . '/../../Views/Member/actor/list.php';
     }
 
-    /**
-     * 🔥 CHI TIẾT DIỄN VIÊN - CÓ PHIM VÀ LINK ĐÚNG
-     */
+    /** CHI TIẾT DIỄN VIÊN */
     public function showProfile($actor_id) {
     $actor = $this->actorModel->getActorById($actor_id);
 
@@ -45,7 +43,6 @@ class ActorController {
 
     $movies = $this->actorModel->getMoviesByActorWithCount($actor_id);
 
-    // ✅ THÊM DÒNG NÀY
     $movieCount = $this->actorModel->getMovieCount($actor_id);
 
     $GLOBALS['actor'] = $actor;
