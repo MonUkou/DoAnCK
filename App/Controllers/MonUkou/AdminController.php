@@ -9,7 +9,7 @@ class AdminController {
 
     public function __construct() {
         require_once __DIR__ . '/../../../Config/config.php';
-        $this->mysqli = new \mysqli(HOST, USER, PASSWORD, DB);  // ✅ DÙNG \
+        $this->mysqli = new \mysqli(HOST, USER, PASSWORD, DB);  // 
         if ($this->mysqli->connect_error) {
             die("Connection failed: " . $this->mysqli->connect_error);
         }
@@ -180,12 +180,16 @@ class AdminController {
             $statusField = $statusFieldResult->fetch_assoc();
             if (!empty($statusField['Type'])) {
                 $type = trim($statusField['Type']);
-                if (preg_match("~^enum\$(.+)\$$~", $type, $matches)) {
+                if (preg_match("~^enum\\((.+)\\)$~", $type, $matches)) {
                     foreach (explode(',', $matches[1]) as $statusValue) {
                         $availableStatusOptions[] = trim($statusValue, "'\"");
                     }
                 }
             }
+        }
+
+        if (empty($availableStatusOptions)) {
+            $availableStatusOptions = ['Under Review', 'Publish', 'Banned'];
         }
 
         $news = [
@@ -205,7 +209,8 @@ class AdminController {
             $news['New_Content'] = trim($_POST['New_Content'] ?? '');
             $news['New_Img'] = trim($_POST['New_Img'] ?? '');
             $news['New_Category'] = in_array($_POST['New_Category'] ?? 'Movie', $allowedCategories, true) ? $_POST['New_Category'] : 'Movie';
-            $news['New_Status'] = in_array($_POST['New_Status'] ?? $news['New_Status'], $availableStatusOptions, true) ? $_POST['New_Status'] : $news['New_Status'];
+            $submittedStatus = trim($_POST['New_Status'] ?? $news['New_Status']);
+            $news['New_Status'] = in_array($submittedStatus, $availableStatusOptions, true) ? $submittedStatus : $news['New_Status'];
 
             if ($news['New_Title'] === '' || $news['New_Content'] === '') {
                 $error = 'Tiêu đề và nội dung là bắt buộc.';
