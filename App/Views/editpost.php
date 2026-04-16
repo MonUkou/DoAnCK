@@ -20,6 +20,10 @@ if ($statusFieldResult) {
     }
 }
 
+if (empty($availableStatusOptions)) {
+    $availableStatusOptions = ['Under Review', 'Publish', 'Banned'];
+}
+
 $hasCategoryField = false;
 $hasViewField = false;
 $columnsResult = $mysqli->query('DESCRIBE tbl_new');
@@ -57,7 +61,8 @@ if (!$error && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($hasCategoryField) {
         $news['New_Category'] = in_array($_POST['New_Category'] ?? 'Movie', $allowedCategories, true) ? $_POST['New_Category'] : 'Movie';
     }
-    $news['New_Status'] = in_array($_POST['New_Status'] ?? $news['New_Status'], $availableStatusOptions, true) ? $_POST['New_Status'] : $news['New_Status'];
+    $submittedStatus = trim($_POST['New_Status'] ?? $news['New_Status']);
+    $news['New_Status'] = in_array($submittedStatus, $availableStatusOptions, true) ? $submittedStatus : $news['New_Status'];
 
     if ($news['New_Title'] === '' || $news['New_Content'] === '') {
         $error = 'Tiêu đề và nội dung là bắt buộc.';
@@ -188,6 +193,17 @@ function escape($value) {
         }
         .content-panel {
             padding: 30px;
+            overflow-wrap: anywhere;
+        }
+        .form-control,
+        .form-select,
+        textarea {
+            max-width: 100%;
+        }
+        textarea.form-control {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            word-break: break-word;
         }
         @media (max-width: 991px) {
             .sidebar-panel { position: static; }
@@ -270,7 +286,9 @@ function escape($value) {
                                                 <option value="<?= escape($statusOption) ?>" <?= $news['New_Status'] === $statusOption ? 'selected' : '' ?>><?= escape($statusOption) ?></option>
                                             <?php endforeach; ?>
                                         <?php else: ?>
-                                            <option value="Publish" <?= $news['New_Status'] === 'Publish' ? 'selected' : '' ?>>Publish</option>
+                                            <?php foreach (['Under Review', 'Publish', 'Banned'] as $statusOption): ?>
+                                                <option value="<?= escape($statusOption) ?>" <?= $news['New_Status'] === $statusOption ? 'selected' : '' ?>><?= escape($statusOption) ?></option>
+                                            <?php endforeach; ?>
                                         <?php endif; ?>
                                     </select>
                                 </div>
