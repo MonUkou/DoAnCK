@@ -1,8 +1,8 @@
 <?php
-if (!defined('HOST')) define("HOST", "localhost");
-if (!defined('DB')) define("DB", "db_web2");
-if (!defined('USER')) define("USER", "root");
-if (!defined('PASSWORD')) define("PASSWORD", "");
+if (!defined('HOST')) define("HOST", getenv('MYSQLHOST') ?: "localhost");
+if (!defined('DB')) define("DB", getenv('MYSQLDATABASE') ?: "db_web2");
+if (!defined('USER')) define("USER", getenv('MYSQLUSER') ?: "root");
+if (!defined('PASSWORD')) define("PASSWORD", getenv('MYSQLPASSWORD') ?: "");
 
 return [
     'db' => [
