@@ -33,7 +33,6 @@
             </div>
         </div>
 
-        <!-- BIO -->
         <div class="mb-3">
             <strong>📖 Tiểu sử:</strong>
             <p>
