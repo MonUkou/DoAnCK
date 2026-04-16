@@ -20,7 +20,7 @@ class HomeController {
         $GLOBALS['pageNum'] = $page;
         $GLOBALS['pageTitle'] = 'Tin tức mới nhất';
 
-        include 'App/Views/member/home.php';
+        include 'App/Views/Member/home.php';
     }
 
     public function movies($page = 1) {
@@ -36,7 +36,7 @@ class HomeController {
         $GLOBALS['pageTitle'] = '🎬 Tin phim hot nhất';
         $GLOBALS['categoryFilter'] = 'Phim ảnh';
 
-        include 'App/Views/member/home.php';
+        include 'App/Views/Member/home.php';
     }
 
     public function showNewsDetail($id) {
@@ -55,7 +55,7 @@ class HomeController {
         $GLOBALS['relatedNews'] = $relatedNews;
         $GLOBALS['pageTitle'] = $news['New_Title'];
 
-        include 'App/Views/member/news-detail.php';
+        include 'App/Views/Member/news-detail.php';
     }
 
     public function search($keyword) {
@@ -80,10 +80,9 @@ class HomeController {
         
         $GLOBALS['searchKeyword'] = $_GET['keyword'] ?? '';
         $GLOBALS['pageTitle'] = 'Tìm kiếm: ' . ($_GET['keyword'] ?? '');
-        include 'App/Views/member/home.php';
+        include 'App/Views/Member/home.php';
     }
 
-    //  TIN LIÊN QUAN THÔNG MINH 
     private function getRelatedNews($newsId, $limit = 4) {
         $news = $this->getNewsById($newsId);
         if (!$news) return [];
@@ -91,7 +90,6 @@ class HomeController {
         $category = $news['New_Category'] ?? 'Movie';
         $title = strtolower(trim(strip_tags($news['New_Title'] ?? '')));
         
-        //  TỪ KHÓA ĐƠN GIẢN
         $keywords = $this->extractKeywords($title);
         $mainKeyword = !empty($keywords) ? $keywords[0] : '';
         $searchPattern = $mainKeyword ? "%$mainKeyword%" : '%';
@@ -159,9 +157,8 @@ class HomeController {
             return strlen($word) > 3 && !in_array($word, $stopwords);
         });
         
-        return array_unique(array_slice($keywords, 0, 3));
-    }
-   
+        return array_unique(array_slice($keywords, 0, 3));}
+
 public function actors($page = 1) {
     $limit = 6;
     $offset = ($page - 1) * $limit;
@@ -175,7 +172,7 @@ public function actors($page = 1) {
     $GLOBALS['pageTitle'] = '👥 Tin diễn viên hot nhất';
     $GLOBALS['categoryFilter'] = 'Diễn viên';
 
-    include 'App/Views/member/home.php';
+    include 'App/Views/Member/home.php';
 }
 
     private function getActorsList($offset, $limit) {
