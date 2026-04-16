@@ -110,7 +110,7 @@ class Actor {
 
         $data = $stmt->fetchAll(PDO::FETCH_OBJ);
 
-        $stmt->closeCursor(); // giữ
+        $stmt->closeCursor();
 
         return $data;
     } catch (PDOException $e) {
@@ -154,7 +154,6 @@ class Actor {
         }
     }
 
-    // ✅ ĐẶT TRONG CLASS
     public function getActorsWithMovieCount($offset, $limit) {
         try {
             $sql = "CALL sp_GetActorsWithMovieCount(:offset, :limit)";
@@ -172,10 +171,9 @@ class Actor {
             return [];
         }
     }
-    // ✅ THÊM METHOD NÀY VÀO class Actor
 public function getMoviesByActorWithCount($actor_id) {
     try {
-        $sql = "CALL sp_GetMoviesByActorWithCount(:actor_id)"; // Nếu có SP này
+        $sql = "CALL sp_GetMoviesByActorWithCount(:actor_id)"; 
         $stmt = $this->conn->prepare($sql);
         $stmt->bindParam(':actor_id', $actor_id, PDO::PARAM_INT);
         $stmt->execute();
@@ -187,7 +185,6 @@ public function getMoviesByActorWithCount($actor_id) {
     } catch (PDOException $e) {
         error_log("Error in getMoviesByActorWithCount: " . $e->getMessage());
         
-        // ✅ FALLBACK: Query thủ công nếu SP không tồn tại
         $sql = "SELECT m.*, 
                        (SELECT COUNT(*) FROM tbl_character c2 WHERE c2.Actor_ID = :actor_id2) as movie_count
                 FROM tbl_character c
