@@ -1,134 +1,18 @@
-<?php if (!isset($_SESSION['user_obj']) || $_SESSION['user_obj']->getRole() != 1): ?>
-    <?php header("Location: index.php"); exit; ?>
-<?php endif; ?>
 <?php
-
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-if (!isset($_SESSION['user_obj'])) {
-    die("Bạn chưa đăng nhập hoặc mất session");
-}
-
-$accountId = $_SESSION['user_obj']->getId(); // hoặc property tùy class
-require_once __DIR__ . '/../../../Config/config.php';
-require_once __DIR__ . '/../../../Config/database.php';
-
-$mysqli = Database::getInstance()->getMysqliConnection();
-$error = null;
-$success = null;
-
-$availableStatusOptions = [];
-$statusFieldResult = $mysqli->query("SHOW COLUMNS FROM tbl_new LIKE 'New_Status'");
-if ($statusFieldResult) {
-    $statusField = $statusFieldResult->fetch_assoc();
-    if (!empty($statusField['Type'])) {
-        $type = trim($statusField['Type']);
-        if (preg_match("~^enum\((.+)\)$~", $type, $matches)) {
-            foreach (explode(',', $matches[1]) as $statusValue) {
-                $availableStatusOptions[] = trim($statusValue, "'\"");
-            }
-        }
-    }
-}
-
-if (empty($availableStatusOptions)) {
-    $availableStatusOptions = ['Under Review', 'Publish', 'Banned'];
-}
-
-$news = [
+$news = $GLOBALS['news'] ?? [
     'New_Title' => '',
     'New_Description' => '',
     'New_Content' => '',
     'New_Img' => '',
     'New_Category' => 'Movie',
-    'New_Status' => !empty($availableStatusOptions) ? $availableStatusOptions[0] : 'Publish',
+    'New_Status' => 'Under Review',
 ];
-
-$allowedCategories = ['Movie', 'Actor'];
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $news['New_Title'] = trim($_POST['New_Title'] ?? '');
-    $news['New_Description'] = trim($_POST['New_Description'] ?? '');
-    $news['New_Content'] = trim($_POST['New_Content'] ?? '');
-    $news['New_Img'] = trim($_POST['New_Img'] ?? '');
-    $news['New_Category'] = in_array($_POST['New_Category'] ?? 'Movie', $allowedCategories, true) ? $_POST['New_Category'] : 'Movie';
-    $submittedStatus = trim($_POST['New_Status'] ?? $news['New_Status']);
-    $news['New_Status'] = in_array($submittedStatus, $availableStatusOptions, true) ? $submittedStatus : $news['New_Status'];
-
-    if ($news['New_Title'] === '' || $news['New_Content'] === '') {
-        $error = 'Tiêu đề và nội dung là bắt buộc.';
-    } else {
-        $tableColumns = [];
-        $columnsResult = $mysqli->query('DESCRIBE tbl_new');
-        if ($columnsResult) {
-            while ($row = $columnsResult->fetch_assoc()) {
-                $tableColumns[] = $row['Field'];
-            }
-        }
-
-        $insertFields = ['New_Title', 'New_Description', 'New_Content', 'New_Img', 'New_Status', 'New_PublishDate', 'Account_ID'];
-        $currentAccountId = $_SESSION['user_obj']->getId();
-
-            $insertValues = [
-                $news['New_Title'],
-                $news['New_Description'],
-                $news['New_Content'],
-                $news['New_Img'],
-                $news['New_Status'],
-                date('Y-m-d'),
-                $currentAccountId,
-            ];
-
-        if (in_array('New_Category', $tableColumns, true)) {
-            $insertFields[] = 'New_Category';
-            $insertValues[] = $news['New_Category'];
-        }
-        if (in_array('New_View', $tableColumns, true)) {
-            $insertFields[] = 'New_View';
-            $insertValues[] = 0;
-        }
-
-        $placeholders = implode(', ', array_fill(0, count($insertFields), '?'));
-        $fieldList = implode(', ', $insertFields);
-        $types = '';
-        foreach ($insertFields as $field) {
-            if ($field === 'Account_ID' || $field === 'New_View') {
-                $types .= 'i';
-            } else {
-                $types .= 's';
-            }
-        }
-
-        $sql = "INSERT INTO tbl_new ({$fieldList}) VALUES ({$placeholders})";
-        $stmt = $mysqli->prepare($sql);
-        if ($stmt) {
-            $bindParams = array_merge([$types], $insertValues);
-            $tmp = [];
-            foreach ($bindParams as $key => $value) {
-                $tmp[$key] = &$bindParams[$key];
-            }
-            call_user_func_array([$stmt, 'bind_param'], $tmp);
-
-            if ($stmt->execute()) {
-                $insertedId = $stmt->insert_id;
-                header('Location: index.php?controller=admin&action=detailpost&id=' . (int) $insertedId);
-                exit;
-            } else {
-                die("SQL ERROR: " . $stmt->error);
-            }
-
-            $error = 'Không thể lưu bài viết. Vui lòng thử lại.';
-            $stmt->close();
-        } else {
-            $error = 'Lỗi chuẩn bị câu lệnh: ' . $mysqli->error;
-        }
-    }
-}
+$error = $GLOBALS['error'] ?? null;
+$availableStatusOptions = $GLOBALS['availableStatusOptions'] ?? ['Under Review', 'Publish', 'Banned'];
+$hasCategoryField = $GLOBALS['hasCategoryField'] ?? true;
 
 function escape($value) {
-    return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 ?>
 <!DOCTYPE html>
@@ -218,33 +102,33 @@ function escape($value) {
             <div class="row g-4">
                 <div class="col-lg-3">
                     <aside class="glass-panel sidebar-panel h-100">
-    <div class="d-flex align-items-center gap-3 mb-4">
-        <div class="brand-mark"><i class="fas fa-film"></i></div>
-        <div>
-            <h4 class="mb-0 fw-bold">Admin Panel</h4>
-            <div class="text-muted small">Điện ảnh & Sao</div>
-        </div>
-    </div>
-    <div class="d-grid gap-2">
-        <a class="sidebar-link" href="index.php?controller=admin&action=dashboard">
-            <i class="fas fa-chart-line"></i><span>Dashboard</span>
-        </a>
-        <a class="sidebar-link active" href="index.php?controller=admin&action=addpost">
-            <i class="fas fa-plus"></i><span>Thêm bài viết</span>
-        </a>
-        <a class="sidebar-link" href="index.php">
-            <i class="fas fa-house"></i><span>Trang chủ</span>
-        </a>
-    </div>
-</aside>
+                        <div class="d-flex align-items-center gap-3 mb-4">
+                            <div class="brand-mark"><i class="fas fa-film"></i></div>
+                            <div>
+                                <h4 class="mb-0 fw-bold">Admin Panel</h4>
+                                <div class="text-muted small">Điện ảnh & Sao</div>
+                            </div>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <a class="sidebar-link" href="index.php?controller=admin&action=dashboard">
+                                <i class="fas fa-chart-line"></i><span>Dashboard</span>
+                            </a>
+                            <a class="sidebar-link active" href="index.php?controller=admin&action=addpost">
+                                <i class="fas fa-plus"></i><span>Thêm bài viết</span>
+                            </a>
+                            <a class="sidebar-link" href="index.php">
+                                <i class="fas fa-house"></i><span>Trang chủ</span>
+                            </a>
+                        </div>
+                    </aside>
                 </div>
                 <div class="col-lg-9">
                     <main class="glass-panel content-panel">
                         <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
                             <div>
-                                <p class="text-uppercase small mb-2 opacity-75">Quản trị bài viết</p>
+                                <p class="text-uppercase small mb-2 opacity-75">Danh sách bài viết</p>
                                 <h1 class="h3 fw-bold mb-2">Thêm bài viết mới</h1>
-                                <p class="mb-0 opacity-75">Nhập dữ liệu và lưu bài viết vào database.</p>
+                                <p class="mb-0 opacity-75"></p>
                             </div>
                             <a class="btn btn-outline-secondary rounded-pill px-4" href="index.php?controller=admin&action=dashboard">
                                 <i class="fas fa-arrow-left me-2"></i>Quay lại
@@ -253,7 +137,7 @@ function escape($value) {
                         <?php if ($error): ?>
                             <div class="alert alert-danger rounded-4 mb-4"><?= escape($error) ?></div>
                         <?php endif; ?>
-                        <form method="post" class="row g-4">
+                        <form method="post" enctype="multipart/form-data" class="row g-4">
                             <div class="col-12">
                                 <label class="form-label fw-semibold">Tiêu đề</label>
                                 <input type="text" name="New_Title" class="form-control form-control-lg" value="<?= escape($news['New_Title']) ?>" required>
@@ -267,9 +151,11 @@ function escape($value) {
                                 <textarea name="New_Content" rows="8" class="form-control" required><?= escape($news['New_Content']) ?></textarea>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Ảnh bài viết (URL)</label>
-                                <input type="text" name="New_Img" class="form-control" value="<?= escape($news['New_Img']) ?>">
+                                <label class="form-label fw-semibold">Ảnh bài viết</label>
+                                <input type="file" name="New_Img" class="form-control" accept="image/*">
+                                <div class="form-text"></div>
                             </div>
+                            <?php if ($hasCategoryField): ?>
                             <div class="col-md-3">
                                 <label class="form-label fw-semibold">Danh mục</label>
                                 <select name="New_Category" class="form-select">
@@ -277,18 +163,13 @@ function escape($value) {
                                     <option value="Actor" <?= $news['New_Category'] === 'Actor' ? 'selected' : '' ?>>Diễn viên</option>
                                 </select>
                             </div>
+                            <?php endif; ?>
                             <div class="col-md-3">
-                                <label class="form-label fw-semibold">Trạng thái</label>
+                                <label class="form-label fw-semibold">Trang thái</label>
                                 <select name="New_Status" class="form-select">
-                                    <?php if (!empty($availableStatusOptions)): ?>
-                                        <?php foreach ($availableStatusOptions as $statusOption): ?>
-                                            <option value="<?= escape($statusOption) ?>" <?= $news['New_Status'] === $statusOption ? 'selected' : '' ?>><?= escape($statusOption) ?></option>
-                                        <?php endforeach; ?>
-                                    <?php else: ?>
-                                        <?php foreach (['Under Review', 'Publish', 'Banned'] as $statusOption): ?>
-                                            <option value="<?= escape($statusOption) ?>" <?= $news['New_Status'] === $statusOption ? 'selected' : '' ?>><?= escape($statusOption) ?></option>
-                                        <?php endforeach; ?>
-                                    <?php endif; ?>
+                                    <?php foreach ($availableStatusOptions as $statusOption): ?>
+                                        <option value="<?= escape($statusOption) ?>" <?= $news['New_Status'] === $statusOption ? 'selected' : '' ?>><?= escape($statusOption) ?></option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
                             <div class="col-12 d-flex gap-2 justify-content-end">
