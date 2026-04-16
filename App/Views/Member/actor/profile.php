@@ -91,6 +91,7 @@
 <div class="text-center mt-4">
     <a href="index.php?controller=actor" 
        class="btn btn-primary px-4 py-2 shadow">
+        ← Quay lại danh sách diễn viên
     </a>
 </div>
 
