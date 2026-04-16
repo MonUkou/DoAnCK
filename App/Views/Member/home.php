@@ -177,7 +177,6 @@ $GLOBALS['heroCarouselSlides'] = [
             </li>
             <?php endif; ?>
 
-            <!-- Next -->
             <?php if ($pageNum < $totalPages): ?>
             <li class="page-item ps-1">
                 <a class="page-link rounded-4 shadow-sm border-0 px-4 py-3 text-primary fw-bold" 
