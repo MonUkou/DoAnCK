@@ -14,12 +14,10 @@ $studios = $GLOBALS['studios'] ?? [];
 
 <div class="container mt-5">
 
-<!-- MAIN CARD -->
 <div class="card shadow-lg border-0 p-4" style="border-radius: 20px;">
 
 <div class="row">
 
-    <!-- IMAGE -->
     <div class="col-md-4 text-center">
         <?php if (!empty($movie['Movie_Img'])): ?>
             <img src="uploads/movies/<?= htmlspecialchars($movie['Movie_Img']) ?>" 
@@ -33,25 +31,21 @@ $studios = $GLOBALS['studios'] ?? [];
         <?php endif; ?>
     </div>
 
-    <!-- INFO -->
     <div class="col-md-8">
 
         <h2 class="fw-bold"><?= htmlspecialchars($movie['Movie_Title']) ?></h2>
 
-        <!-- WATCHLIST -->
         <a href="index.php?controller=watchlist&action=add&movie_id=<?= $movie['Movie_ID'] ?>" 
            class="btn btn-danger mb-3">
            ❤️ Thêm vào Watchlist
         </a>
 
-        <!-- GENRES -->
         <div class="mb-3">
             <?php foreach ($genres as $g): ?>
                 <span class="badge bg-primary"><?= htmlspecialchars($g['Genre_Name']) ?></span>
             <?php endforeach; ?>
         </div>
 
-        <!-- DATE -->
         <div class="mb-3">
             <strong>🎬 Ngày công chiếu:</strong><br>
             <span class="text-primary fs-5">
@@ -66,7 +60,6 @@ $studios = $GLOBALS['studios'] ?? [];
             </span>
         </div>
 
-        <!-- DIRECTOR -->
         <div class="mb-3">
             <strong>🎥 Đạo diễn:</strong><br>
             <?php if (!empty($directors)): ?>
@@ -78,7 +71,6 @@ $studios = $GLOBALS['studios'] ?? [];
             <?php endif; ?>
         </div>
 
-        <!-- STUDIO -->
         <div class="mb-3">
             <strong>🏢 Studio:</strong><br>
             <?php if (!empty($studios)): ?>
@@ -90,7 +82,6 @@ $studios = $GLOBALS['studios'] ?? [];
             <?php endif; ?>
         </div>
 
-        <!-- DESCRIPTION -->
         <div class="mb-3">
             <strong>📖 Mô tả:</strong>
             <p><?= nl2br(htmlspecialchars($movie['Movie_Description'] ?? 'Không có')) ?></p>
@@ -101,7 +92,6 @@ $studios = $GLOBALS['studios'] ?? [];
 </div>
 </div>
 
-<!-- ACTORS CARD -->
 <div class="card mt-4 p-4 shadow-sm" style="border-radius: 20px;">
     <h4 class="mb-3">👥 Diễn viên</h4>
 
@@ -116,20 +106,16 @@ $studios = $GLOBALS['studios'] ?? [];
             <a href="index.php?controller=actor&action=detail&id=<?= $actor['Actor_ID'] ?>"  
                class="text-decoration-none">
 
-                <!-- TRONG PHẦN ACTORS -->
 <div class="card-body p-3 h-100 border-0 shadow-sm">
     <div class="d-flex align-items-center">
-        <!-- AVATAR -->
         <div class="avatar me-3">
             <?= strtoupper(substr($actor['Actor_Name'], 0, 1)) ?>
         </div>
 
-        <!-- INFO -->
         <div class="flex-grow-1">
             <div class="fw-bold text-dark">
                 <?= htmlspecialchars($actor['Actor_Name']) ?>
             </div>
-            <!-- ✅ THÊM SỐ PHIM -->
             <small class="text-success">
                 <i class="fas fa-film me-1"></i>
                 <?= $actor['movie_count'] ?? 0 ?> phim
@@ -150,7 +136,6 @@ $studios = $GLOBALS['studios'] ?? [];
     <?php endif; ?>
 </div>
 
-<!-- BACK BUTTON -->
 <div class="text-center mt-4">
     <a href="index.php?controller=movie" 
        class="btn btn-primary px-4 py-2 shadow">
