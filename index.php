@@ -1,5 +1,4 @@
 <?php
-
 require_once 'App/Models/MonUkou/Account.php';
 session_start();
 
@@ -8,11 +7,6 @@ require_once 'Config/config.php';
 
 ob_start();
 
-if (isset($_GET['controller']) && $_GET['controller'] === 'search') {
-    error_reporting(E_ALL);
-    ini_set('display_errors', 1);
-    echo "SEARCH DEBUG MODE\n";
-}
 if (!isset($_SESSION['user_obj'])) {
     $controllerCheck = $_GET['controller'] ?? '';
     if ($controllerCheck !== 'account') {
@@ -22,41 +16,39 @@ if (!isset($_SESSION['user_obj'])) {
 }
 
 try {
-
     $controller = $_GET['controller'] ?? 'home';
     $action = $_GET['action'] ?? 'index';
     $page = $_GET['page'] ?? 1;
     $id = $_GET['id'] ?? 0;
 
     switch ($controller) {
+        case 'admin':
+            require_once 'App/Controllers/MonUkou/AdminController.php';
+            $ctrl = new \App\Controllers\MonUkou\AdminController();
 
-case 'admin':
-    require_once 'App/Controllers/MonUkou/AdminController.php';
-    $ctrl = new \App\Controllers\MonUkou\AdminController();
+            if (!isset($_SESSION['user_obj']) || $_SESSION['user_obj']->getRole() != 1) {
+                header("Location: index.php");
+                exit;
+            }
 
-    if (!isset($_SESSION['user_obj']) || $_SESSION['user_obj']->getRole() != 1) {
-        header("Location: index.php");
-        exit;
-    }
-
-    switch($action) {
-        case 'dashboard':
-            $ctrl->dashboard();
+            switch ($action) {
+                case 'dashboard':
+                    $ctrl->dashboard();
+                    break;
+                case 'addpost':
+                    $ctrl->addpost();
+                    break;
+                case 'editpost':
+                    $ctrl->editpost();
+                    break;
+                case 'detailpost':
+                    $ctrl->detailpost();
+                    break;
+                default:
+                    $ctrl->dashboard();
+                    break;
+            }
             break;
-        case 'addpost':
-            $ctrl->addpost();
-            break;
-        case 'editpost':
-            $ctrl->editpost();
-            break;
-        case 'detailpost':
-            $ctrl->detailpost();
-            break;
-        default:
-            $ctrl->dashboard();
-            break;
-    }
-    break;
 
         case 'account':
             require_once 'App/Controllers/MonUkou/AccountController.php';
@@ -81,16 +73,22 @@ case 'admin':
             require_once 'App/Controllers/PNem06/HomeController.php';
             $ctrl = new HomeController(Database::getInstance()->getConnection());
 
-            if ($action === 'movies') $ctrl->movies($page);
-            elseif ($action === 'actors') $ctrl->actors($page);
-            else $ctrl->index($page);
+            if ($action === 'movies') {
+                $ctrl->movies($page);
+            } elseif ($action === 'actors') {
+                $ctrl->actors($page);
+            } elseif ($action === 'search') {
+                $ctrl->search($_GET['keyword'] ?? '');
+            } else {
+                $ctrl->index($page);
+            }
             break;
 
         case 'movie':
             require_once 'App/Controllers/birb109/MovieController.php';
             $ctrl = new MovieController(Database::getInstance()->getConnection());
 
-            if ($action === 'detail' || $action === 'showDetail') {  
+            if ($action === 'detail' || $action === 'showDetail') {
                 $ctrl->showDetail($id);
             } else {
                 $ctrl->index($page);
@@ -98,55 +96,61 @@ case 'admin':
             break;
 
         case 'actor':
-    require_once 'App/Controllers/PNem06/ActorController.php';
-    $ctrl = new ActorController();
-    if ($action === 'detail' || $action === 'showProfile') {
-        $ctrl->showProfile($id);
-    } else {
-        $ctrl->index($page);
-    }
-    break;
+            require_once 'App/Controllers/PNem06/ActorController.php';
+            $ctrl = new ActorController();
+            if ($action === 'detail' || $action === 'showProfile') {
+                $ctrl->showProfile($id);
+            } else {
+                $ctrl->index($page);
+            }
+            break;
 
-    case 'news':
-        require_once 'App/Controllers/TNhu2006/NewsController.php';
-        $ctrl = new NewsController();
+        case 'news':
+            require_once 'App/Controllers/TNhu2006/NewsController.php';
+            $ctrl = new NewsController();
 
-        if ($action === 'showDetail') {
-            $ctrl->showDetail($id);
-        } else {
-            $ctrl->index();
-        }
-        break;
+            if ($action === 'showDetail') {
+                $ctrl->showDetail($id);
+            } else {
+                $ctrl->index();
+            }
+            break;
 
+        case 'comment':
+            require_once 'App/Controllers/TNhu2006/CommentController.php';
+            $ctrl = new CommentController();
 
-    case 'comment':
-    require_once 'App/Controllers/TNhu2006/CommentController.php';
-    $ctrl = new CommentController();
+            if ($action === 'add') {
+                $ctrl->addComment();
+            } elseif ($action === 'delete') {
+                $ctrl->deleteComment();
+            }
+            break;
 
-    if ($action === 'add') {
-        $ctrl->addComment();
-    } elseif ($action === 'delete') {
-        $ctrl->deleteComment();
-    }
-    break;
-  
-case 'search':
-    require_once 'App/Controllers/TNhu2006/SearchController.php';
-    $ctrl = new \App\Controllers\TNhu2006\SearchController();
+        case 'search':
+            require_once 'App/Controllers/TNhu2006/SearchController.php';
+            $ctrl = new \App\Controllers\TNhu2006\SearchController();
 
-    if ($action === 'ajax') {
-        $ctrl->ajax();
-        exit; 
-    }
-    break;
-       
+            if ($action === 'ajax') {
+                $ctrl->ajax();
+                exit;
+            }
+            if ($action === 'cards') {
+                $ctrl->cards();
+                exit;
+            }
+
+            require_once 'App/Controllers/PNem06/HomeController.php';
+            $homeCtrl = new HomeController(Database::getInstance()->getConnection());
+            $homeCtrl->search($_GET['keyword'] ?? '');
+            break;
+
         default:
             require_once 'App/Controllers/PNem06/HomeController.php';
             $ctrl = new HomeController(Database::getInstance()->getConnection());
             $ctrl->index(1);
             break;
     }
-
 } catch (Exception $e) {
     echo "<div class='alert alert-danger'>Lỗi: " . $e->getMessage() . "</div>";
 }
