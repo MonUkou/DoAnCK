@@ -10,9 +10,6 @@ class NewsController {
         $this->mysqli = Database::getInstance()->getMysqliConnection();
     }
 
-    // =========================
-    // LIST
-    // =========================
     public function index() {
     $model = new News($this->mysqli);
     $newsList = $model->getLatest(12);
@@ -32,9 +29,6 @@ class NewsController {
     include __DIR__ . '/../../../App/Views/Member/home.php';
 }
 
-    // =========================
-    // DETAIL
-    // =========================
     public function showDetail($news_id) {
     $model = new News($this->mysqli);
 
@@ -48,7 +42,6 @@ class NewsController {
 
     $model->increaseView($news_id);
 
-    // ✅ KHÔNG LOOP NỮA
     $comments = $model->getComments($news_id);
 
     $relatedNews = $model->getRelated(
