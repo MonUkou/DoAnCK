@@ -27,7 +27,7 @@ class Director{
     public function getSocial(){
         return $this->social;
     }
-    // CALL Stored Procedure
+  
     public function getMoviesByDirector($director_id){
         try {
             if (!isset($director_id) || !is_numeric($director_id)) {
