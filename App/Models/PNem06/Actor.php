@@ -110,7 +110,7 @@ class Actor {
 
         $data = $stmt->fetchAll(PDO::FETCH_OBJ);
 
-        $stmt->closeCursor();
+        $stmt->closeCursor(); 
 
         return $data;
     } catch (PDOException $e) {
@@ -171,9 +171,51 @@ class Actor {
             return [];
         }
     }
+
+    public function searchActorsWithMovieCount($keyword, $offset, $limit) {
+        try {
+            $sql = "SELECT a.*,
+                           COUNT(DISTINCT c.Movie_ID) AS movie_count
+                    FROM tbl_actor a
+                    LEFT JOIN tbl_character c ON a.Actor_ID = c.Actor_ID
+                    WHERE a.Actor_Name LIKE :keyword
+                    GROUP BY a.Actor_ID
+                    ORDER BY a.Actor_Name ASC
+                    LIMIT :limit OFFSET :offset";
+
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindValue(':keyword', '%' . $keyword . '%', PDO::PARAM_STR);
+            $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
+            $stmt->execute();
+
+            return $stmt->fetchAll(PDO::FETCH_OBJ) ?: [];
+        } catch (PDOException $e) {
+            error_log("Actor searchActorsWithMovieCount: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function countActorsByKeyword($keyword) {
+        try {
+            $sql = "SELECT COUNT(*) AS total
+                    FROM tbl_actor
+                    WHERE Actor_Name LIKE :keyword";
+
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindValue(':keyword', '%' . $keyword . '%', PDO::PARAM_STR);
+            $stmt->execute();
+
+            $result = $stmt->fetch(PDO::FETCH_OBJ);
+            return $result->total ?? 0;
+        } catch (PDOException $e) {
+            error_log("Actor countActorsByKeyword: " . $e->getMessage());
+            return 0;
+        }
+    }
 public function getMoviesByActorWithCount($actor_id) {
     try {
-        $sql = "CALL sp_GetMoviesByActorWithCount(:actor_id)"; 
+        $sql = "CALL sp_GetMoviesByActorWithCount(:actor_id)"; // Nếu có SP này
         $stmt = $this->conn->prepare($sql);
         $stmt->bindParam(':actor_id', $actor_id, PDO::PARAM_INT);
         $stmt->execute();
@@ -200,5 +242,4 @@ public function getMoviesByActorWithCount($actor_id) {
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 }
-
 }
