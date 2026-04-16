@@ -1,6 +1,6 @@
-<?php
-$title = isset($GLOBALS['searchKeyword']) ?
-    "Kết quả tìm kiếm: \"{$GLOBALS['searchKeyword']}\"" :
+<?php 
+$title = isset($GLOBALS['searchKeyword']) ? 
+    "Kết quả tìm kiếm: \"{$GLOBALS['searchKeyword']}\"" : 
     ($GLOBALS['pageTitle'] ?? "Tin tức mới nhất");
 
 $categoryFilter = $GLOBALS['categoryFilter'] ?? '';
@@ -8,6 +8,7 @@ $newsList = $GLOBALS['newsList'] ?? [];
 $totalPages = $GLOBALS['totalPages'] ?? 1;
 $pageNum = $GLOBALS['pageNum'] ?? 1;
 $totalNews = isset($GLOBALS['totalNews']) ? $GLOBALS['totalNews'] : (count($newsList) * $totalPages);
+$searchKeyword = $GLOBALS['searchKeyword'] ?? '';
 $GLOBALS['heroCarouselSlides'] = [
     [
         'title' => 'Tin phim mới mỗi ngày',
@@ -33,12 +34,12 @@ $GLOBALS['heroCarouselSlides'] = [
 ];
 ?>
 
-<div class="text-center mb-5 pb-4">
-    <h2 class="mb-4 text-white fw-bold fs-1 lh-1 news-title">
+<div class="text-center mb-5 pb-4" id="homeTitleBlock">
+    <h2 class="mb-4 text-white fw-bold fs-1 lh-1 news-title" id="pageTitleHeading">
         <?php if (isset($GLOBALS['searchKeyword'])): ?>
             <?= $title ?>
         <?php elseif ($categoryFilter): ?>
-            <?= $title ?>
+            <?= $title ?> 
             <span class="badge bg-warning text-dark fs-6 ms-4 px-4 py-2 shadow-sm border border-white">
                 <i class="fas fa-film me-1"></i><?= $categoryFilter ?>
             </span>
@@ -46,11 +47,11 @@ $GLOBALS['heroCarouselSlides'] = [
             <?= $title ?>
         <?php endif; ?>
     </h2>
-   
+    
     <?php if ($totalPages > 1): ?>
-    <div class="text-white-50 fs-5">
+    <div class="text-white-50 fs-5" id="homeMetaText">
         <i class="fas fa-list me-2"></i>
-        Trang <strong><?= $pageNum ?></strong> / <strong><?= $totalPages ?></strong>
+        Trang <strong><?= $pageNum ?></strong> / <strong><?= $totalPages ?></strong> 
         <?php if (isset($totalNews)): ?>
         (<?= number_format($totalNews) ?> tin tổng)
         <?php endif; ?>
@@ -58,7 +59,7 @@ $GLOBALS['heroCarouselSlides'] = [
     <?php endif; ?>
 </div>
 
-<div class="row g-4 mb-5">
+<div class="row g-4 mb-5" id="newsGrid">
     <?php if (empty($newsList)): ?>
     <div class="col-12 text-center py-8">
         <i class="fas fa-inbox fa-5x text-white-50 mb-4"></i>
@@ -73,14 +74,14 @@ $GLOBALS['heroCarouselSlides'] = [
     <?php else: ?>
         <?php foreach ($newsList as $index => $news): ?>
         <div class="col-sm-6 col-lg-4">
-            <div class="card h-100 shadow-xl hover-shadow-lg border-0 overflow-hidden position-relative"
+            <div class="card h-100 shadow-xl hover-shadow-lg border-0 overflow-hidden position-relative" 
                  style="border-radius: 24px; background: rgba(255,255,255,0.95); backdrop-filter: blur(20px);">
-               
+                
                 <div class="position-relative overflow-hidden" style="height: 240px;">
                     <div class="gradient-overlay"></div>
                     <div class="card-img-top h-100 d-flex align-items-center justify-content-center position-relative p-4">
                         <?php if (!empty($news['New_Img'])): ?>
-                        <img src="uploads/news/<?= htmlspecialchars($news['New_Img']) ?>"
+                        <img src="uploads/news/<?= htmlspecialchars($news['New_Img']) ?>" 
                         class="w-100 h-100 object-fit-cover position-absolute top-0 start-0"
                         alt="<?= htmlspecialchars($news['New_Title']) ?>">
                         <?php else: ?>
@@ -102,12 +103,12 @@ $GLOBALS['heroCarouselSlides'] = [
                     <p class="mb-3"><?= $news['short_desc'] ?? $news['short_content'] ?? '...' ?></p>
 
                     <h5 class="card-title mb-3 lh-sm">
-                        <a href="index.php?controller=news&action=showDetail&id=<?= $news['New_ID'] ?>"
+                        <a href="index.php?controller=news&action=showDetail&id=<?= $news['New_ID'] ?>" 
                         class="text-decoration-none text-dark fw-bold hover-primary fs-5">
                             <?= htmlspecialchars($news['New_Title']) ?>
                         </a>
                     </h5>
-                   
+                    
                     <p class="card-text text-muted small lh-lg mb-3 flex-grow-1"><?= $news['short_content'] ?? '...' ?></p>
                     <div class="d-flex justify-content-between align-items-end small text-muted">
                         <span><i class="fas fa-clock me-1"></i><?= date('d/m/Y', strtotime($news['New_PublishDate'])) ?></span>
@@ -123,20 +124,22 @@ $GLOBALS['heroCarouselSlides'] = [
 </div>
 
 <?php if ($totalPages > 1): ?>
-<div class="row justify-content-center mb-5">
+<div class="row justify-content-center mb-5" id="homePagination">
     <nav aria-label="Phân trang tin tức">
-        <ul class="pagination pagination-lg shadow-xl bg-white rounded-pill p-2 mx-auto"
+        <ul class="pagination pagination-lg shadow-xl bg-white rounded-pill p-2 mx-auto" 
             style="max-width: 600px; box-shadow: 0 20px 40px rgba(0,0,0,0.15) !important;">
-           
-            <?php
+            
+            <?php 
             $currentAction = $_GET['action'] ?? 'index';
             $baseUrl = "?controller=home&action=$currentAction";
+            if ($searchKeyword !== '') {
+                $baseUrl .= '&keyword=' . urlencode($searchKeyword);
+            }
             ?>
-           
-            <!-- Previous -->
+            
             <?php if ($pageNum > 1): ?>
             <li class="page-item pe-1">
-                <a class="page-link rounded-4 shadow-sm border-0 px-4 py-3 text-primary fw-bold"
+                <a class="page-link rounded-4 shadow-sm border-0 px-4 py-3 text-primary fw-bold" 
                    href="<?= $baseUrl ?>&page=<?= max(1, $pageNum-1) ?>"
                    style="min-width: 80px;">
                     <i class="fas fa-chevron-left me-2"></i>Trước
@@ -144,11 +147,11 @@ $GLOBALS['heroCarouselSlides'] = [
             </li>
             <?php endif; ?>
 
-            <?php
+            <?php 
             $start = max(1, $pageNum - 2);
             $end = min($totalPages, $pageNum + 2);
             ?>
-           
+            
             <?php if ($start > 1): ?>
             <li class="page-item px-1">
                 <a class="page-link rounded-3 shadow-sm border-0 px-3 py-3" href="<?= $baseUrl ?>&page=1">1</a>
@@ -158,10 +161,9 @@ $GLOBALS['heroCarouselSlides'] = [
             <?php endif; ?>
             <?php endif; ?>
 
-
             <?php for ($i = $start; $i <= $end; $i++): ?>
             <li class="page-item px-1 <?= $i == $pageNum ? 'active' : '' ?>">
-                <a class="page-link rounded-3 shadow-sm border-0 px-4 py-3 fw-bold <?= $i == $pageNum ? 'bg-gradient-primary text-white shadow-lg' : 'text-primary hover-primary' ?>"
+                <a class="page-link rounded-3 shadow-sm border-0 px-4 py-3 fw-bold <?= $i == $pageNum ? 'bg-gradient-primary text-white shadow-lg' : 'text-primary hover-primary' ?>" 
                    href="<?= $baseUrl ?>&page=<?= $i ?>"><?= $i ?></a>
             </li>
             <?php endfor; ?>
@@ -175,11 +177,10 @@ $GLOBALS['heroCarouselSlides'] = [
             </li>
             <?php endif; ?>
 
-
             <!-- Next -->
             <?php if ($pageNum < $totalPages): ?>
             <li class="page-item ps-1">
-                <a class="page-link rounded-4 shadow-sm border-0 px-4 py-3 text-primary fw-bold"
+                <a class="page-link rounded-4 shadow-sm border-0 px-4 py-3 text-primary fw-bold" 
                    href="<?= $baseUrl ?>&page=<?= min($totalPages, $pageNum+1) ?>"
                    style="min-width: 80px;">
                     Sau<i class="fas fa-chevron-right ms-2"></i>
