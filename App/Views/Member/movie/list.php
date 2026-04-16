@@ -9,9 +9,9 @@ $searchKeyword = $GLOBALS['searchKeyword'] ?? '';
 <div class="text-center mb-5 pb-4">
     <h2 class="mb-4 text-white fw-bold fs-1 lh-1">
         <?php if ($searchKeyword !== ''): ?>
-            Ket qua phim: "<?= htmlspecialchars($searchKeyword) ?>"
+            Kết quả phim: "<?= htmlspecialchars($searchKeyword) ?>"
         <?php else: ?>
-            <?= $GLOBALS['pageTitle'] ?? 'Danh sach phim' ?>
+            <?= $GLOBALS['pageTitle'] ?? 'Danh sách phim' ?>
         <?php endif; ?>
         <span class="badge bg-warning text-dark fs-6 ms-4 px-4 py-2 shadow-sm">
             <?= number_format($totalMovies) ?> phim
@@ -80,7 +80,7 @@ $searchKeyword = $GLOBALS['searchKeyword'] ?? '';
                     </h5>
 
                     <p class="card-text text-muted small lh-lg mb-3 flex-grow-1 line-clamp-3">
-                        <?= htmlspecialchars($movie['Movie_Description'] ?: 'Khong co mo ta') ?>
+                        <?= htmlspecialchars($movie['Movie_Description'] ?: 'Không có mô tả') ?>
                     </p>
 
                     <div class="d-flex justify-content-between align-items-end">
@@ -105,7 +105,7 @@ $searchKeyword = $GLOBALS['searchKeyword'] ?? '';
 
 <?php if ($totalPages > 1): ?>
 <div class="row justify-content-center mb-5">
-    <nav aria-label="Phan trang phim">
+    <nav aria-label="Phân trang phim">
         <ul class="pagination pagination-lg shadow-xl bg-white rounded-pill p-2 mx-auto" style="max-width: 600px;">
             <?php
             $baseUrl = '?controller=movie';
