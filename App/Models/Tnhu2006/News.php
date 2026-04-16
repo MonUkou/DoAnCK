@@ -1,93 +1,73 @@
-<?php
+
+ <?php
 class News {
-    private $id;
-    private $title;
-    private $content;
-    private $date;
-
-    private $img;
-    private $status;
-    private $account_id;
-
     private $conn;
 
     public function __construct(mysqli $db){
         $this->conn = $db;
     }
 
-    //Getter / Setter
-    public function setId($id)              { $this->id = $id; }
-    public function setTitle($title)        { $this->title = $title; }
-    public function setContent($content)    { $this->content = $content; }
-    public function setDate($date)          { $this->date = $date; }
-    public function setImg($img)            { $this->img = $img; }
-    public function setStatus($status)      { $this->status = $status; }
-    public function setAccount($account)    { $this->account_id = $account; }
-    
-    public function getId()         { return $this->id; }
-    public function getTitle()      { return $this->title; }
-    public function getContent()    { return $this->content; }
-    public function getDate()       { return $this->date; }
-    public function getImg()        { return $this->img; }
-    public function getStatus()     { return $this->status; }
-    public function getAccount()    { return $this->account_id; }
+    public function getLatest($limit){
+        $stmt = $this->conn->prepare("CALL sp_GetLatestNews(?)");
+        $stmt->bind_param("i", $limit);
+        $stmt->execute();
 
-    //publish()
-    public function publish(){
-        $sql= "INSERT INTO tbl_new
-                (New_Title, New_Content, New_Img, New_PublishDate, New_Status, Account_ID)
-                VALUES (?,?,?,?,?,?)";
-        $stmt = $this->conn->prepare($sql);
+        $result = $stmt->get_result();
 
-        $stmt->bind_param(
-            "ssssii",
-            $this->title,
-            $this->content,
-            $this->img,
-            $this->date,
-            $this->status,
-            $this->account_id
-        );
+        $stmt->close();
+        $this->conn->next_result();
 
-        return $stmt->execute();
+        return $result;
     }
 
-    //edit()
-    public function edit(){
+    public function getById($id){
+        $stmt = $this->conn->prepare("CALL sp_GetNewsById(?)");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
 
-        $sql = "UPDATE tbl_new
-                SET New_Title=?, New_Content=?, New_Img=?, New_Status=?
-                WHERE New_ID=?";
-        
-        $stmt = $this->conn->prepare($sql);
+        $result = $stmt->get_result()->fetch_assoc();
 
-        $stmt->bind_param(
-            "sssii",
-            $this->title,
-            $this->content,
-            $this->img,
-            $this->status,
-            $this->id
-        );
+        $stmt->close();
+        $this->conn->next_result();
 
-        return $stmt->execute();
+        return $result;
     }
 
-    //Lấy danh sách tin
-    public function getAll(){
-        $sql = "SELECT * FROM tbl_new ORDER BY New_PublishDate DESC";
+    public function increaseView($id){
+        $stmt = $this->conn->prepare("CALL sp_IncrementNewsView(?)");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
 
-        return $this->conn->query($sql);
+        $stmt->close();
+        $this->conn->next_result();
+
+        return true;
     }
 
-    //Xóa
-    public function delete(){
-        $sql = "DELETE FROM tbl_new WHERE New_ID=?";
+    public function getComments($news_id){
+        $stmt = $this->conn->prepare("CALL sp_GetCommentsByNews(?)");
+        $stmt->bind_param("i", $news_id);
+        $stmt->execute();
 
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("i",$this->id);
+        $result = $stmt->get_result();
 
-        return $stmt->execute();
+        $stmt->close();
+        $this->conn->next_result();
+
+        return $result;
+    }
+
+    public function getRelated($newsId, $category, $limitNum){
+        $stmt = $this->conn->prepare("CALL sp_GetRelatedNews(?, ?, ?)");
+        $stmt->bind_param("isi", $newsId, $category, $limitNum);
+        $stmt->execute();
+
+        $result = $stmt->get_result();
+
+        $stmt->close();
+        $this->conn->next_result();
+
+        return $result;
     }
 }
 ?>
